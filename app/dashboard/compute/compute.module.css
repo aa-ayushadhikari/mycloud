@@ -1,0 +1,241 @@
+/* Resource summary */
+.resourceSummary {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.resourceItem {
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: var(--box-shadow);
+}
+
+.resourceLabel {
+  font-size: 0.875rem;
+  color: var(--secondary);
+  font-weight: 500;
+}
+
+.resourceValue {
+  font-weight: 600;
+}
+
+/* Action buttons */
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionButton {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.startButton {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.startButton:hover {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+.stopButton {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.stopButton:hover {
+  background-color: rgba(245, 158, 11, 0.2);
+}
+
+.deleteButton {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.deleteButton:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  width: 90%;
+  max-width: 550px;
+  box-shadow: var(--box-shadow);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: var(--secondary);
+}
+
+.modalContent {
+  padding: 1.25rem;
+}
+
+/* Form styles */
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.formRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.formRow .formGroup {
+  flex: 1;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--light-gray);
+  border-radius: var(--border-radius);
+  font-family: inherit;
+  font-size: 0.875rem;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.rangeInput {
+  width: 100%;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.rangeValue {
+  text-align: right;
+  font-size: 0.875rem;
+  color: var(--secondary);
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.submitButton {
+  padding: 0.75rem 1.25rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex-grow: 1;
+  font-family: var(--font-geist-sans);
+}
+
+.submitButton:hover {
+  background-color: var(--primary-dark);
+}
+
+.cancelButton {
+  padding: 0.75rem 1.25rem;
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--light-gray);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: var(--font-geist-sans);
+}
+
+.cancelButton:hover {
+  background-color: var(--light-gray);
+}
+
+.errorMessage {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--danger);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .resourceSummary {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .formRow {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .input,
+  .select {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--dark-gray);
+  }
+} 

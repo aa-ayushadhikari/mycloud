@@ -1,95 +1,92 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Navbar from './components/Navbar';
+import HeroSection from './components/HeroSection';
+import Services from './components/Services';
+import Pricing from './components/Pricing';
+import Footer from './components/Footer';
+import styles from './page.module.css';
 
 export default function Home() {
   return (
-    <div className={styles.page}>
+    <div className={styles.container}>
+      <Navbar />
       <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.js</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+        <HeroSection />
+        <Services />
+        <div id="solutions" className={styles.featuresSection}>
+          <div className={styles.featuresContainer}>
+            <div className={styles.featuresSectionHeader}>
+              <h2 className={styles.featuresSectionTitle}>
+                Enterprise Solutions for <span className={styles.highlightText}>Every Need</span>
+              </h2>
+              <p className={styles.featuresSectionDescription}>
+                Discover how MyCloud can transform your business with our comprehensive suite of cloud solutions
+              </p>
+            </div>
+            <div className={styles.featuresGrid}>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon}>🚀</div>
+                <h3 className={styles.featureTitle}>High Performance</h3>
+                <p className={styles.featureDescription}>
+                  Industry-leading performance with the latest hardware and optimized infrastructure
+                </p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon}>🛡️</div>
+                <h3 className={styles.featureTitle}>Enterprise Security</h3>
+                <p className={styles.featureDescription}>
+                  Advanced security features and compliance with industry standards
+                </p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon}>⚖️</div>
+                <h3 className={styles.featureTitle}>Scalable Resources</h3>
+                <p className={styles.featureDescription}>
+                  Scale up or down instantly based on your business needs
+                </p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon}>💰</div>
+                <h3 className={styles.featureTitle}>Cost-Effective</h3>
+                <p className={styles.featureDescription}>
+                  Pay only for what you use with transparent pricing and no hidden fees
+                </p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon}>🔄</div>
+                <h3 className={styles.featureTitle}>High Availability</h3>
+                <p className={styles.featureDescription}>
+                  99.99% uptime guarantee with redundant infrastructure
+                </p>
+              </div>
+              <div className={styles.featureCard}>
+                <div className={styles.featureIcon}>🌍</div>
+                <h3 className={styles.featureTitle}>Global Network</h3>
+                <p className={styles.featureDescription}>
+                  Data centers across the globe for low-latency access anywhere
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Pricing />
+        <div id="cta" className={styles.ctaSection}>
+          <div className={styles.ctaContainer}>
+            <h2 className={styles.ctaTitle}>Ready to Get Started?</h2>
+            <p className={styles.ctaDescription}>
+              Join thousands of companies that trust MyCloud for their cloud infrastructure needs
+            </p>
+            <div className={styles.ctaButtons}>
+              <a href="/signup" className={`${styles.ctaPrimaryButton} btn-primary`}>
+                Sign Up Free
+              </a>
+              <a href="/signin" className={styles.ctaSecondaryButton}>
+                Sign In
+              </a>
+            </div>
+          </div>
         </div>
       </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -1,0 +1,297 @@
+.heroSection {
+  position: relative;
+  padding: 8rem 1.5rem 6rem;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.heroContent {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.heroText {
+  flex: 1;
+  max-width: 600px;
+}
+
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(90deg, var(--foreground) 0%, var(--foreground) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.highlight {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.heroDescription {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+  color: var(--secondary);
+  line-height: 1.6;
+}
+
+.heroButtons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.primaryButton {
+  padding: 0.875rem 1.75rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.secondaryButton {
+  padding: 0.875rem 1.75rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 1rem;
+  border: 1px solid var(--secondary);
+  background-color: transparent;
+  color: var(--secondary);
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+  background-color: var(--light-gray);
+}
+
+.statsContainer {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--secondary);
+}
+
+.heroVisual {
+  flex: 1;
+  position: relative;
+}
+
+.visualWrapper {
+  position: relative;
+  height: 400px;
+}
+
+.glassCard {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1.5rem;
+  width: 300px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glassCard:first-child {
+  top: 0;
+  right: 0;
+  z-index: 1;
+}
+
+.secondCard {
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  width: 250px;
+}
+
+.cardHeader {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.cardDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.cardDot:nth-child(1) {
+  background-color: var(--danger);
+}
+
+.cardDot:nth-child(2) {
+  background-color: var(--warning);
+}
+
+.cardDot:nth-child(3) {
+  background-color: var(--success);
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.serverItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.serverIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+.serverInfo {
+  flex: 1;
+}
+
+.serverName {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.serverStatus {
+  font-size: 0.75rem;
+  color: var(--success);
+}
+
+.serverMetric {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.chartContainer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 150px;
+  padding: 1rem 0;
+}
+
+.chartBar {
+  width: 15%;
+  background: linear-gradient(180deg, var(--primary), var(--accent));
+  border-radius: 4px 4px 0 0;
+}
+
+.heroBg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top right, rgba(0, 201, 255, 0.1), transparent 60%),
+              radial-gradient(circle at bottom left, rgba(0, 102, 255, 0.1), transparent 60%);
+  z-index: 1;
+}
+
+@media (max-width: 1024px) {
+  .heroContent {
+    flex-direction: column;
+  }
+
+  .heroText {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .heroTitle {
+    font-size: 2.8rem;
+  }
+
+  .heroButtons {
+    justify-content: center;
+  }
+
+  .statsContainer {
+    justify-content: center;
+  }
+
+  .visualWrapper {
+    height: 350px;
+    margin-top: 2rem;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .heroSection {
+    padding: 7rem 1rem 4rem;
+  }
+
+  .heroTitle {
+    font-size: 2.2rem;
+  }
+  
+  .heroDescription {
+    font-size: 1.1rem;
+  }
+
+  .statsContainer {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .visualWrapper {
+    height: 300px;
+  }
+
+  .glassCard {
+    transform: scale(0.9);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .glassCard {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .serverItem {
+    background: rgba(0, 0, 0, 0.2);
+  }
+} 

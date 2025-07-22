@@ -1,0 +1,551 @@
+/* Network link */
+.networkNameLink {
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: none;
+  position: relative;
+  font-weight: 500;
+}
+
+.networkNameLink::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s ease;
+}
+
+.networkNameLink:hover::after {
+  transform: scaleX(1);
+}
+
+/* Boolean indicator */
+.booleanIndicator {
+  font-weight: 700;
+}
+
+/* CIDR code display */
+.cidrCode, .networkCode {
+  font-family: var(--font-geist-mono);
+  background-color: var(--light-gray);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+}
+
+/* Action buttons */
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionButton {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 0.875rem;
+}
+
+.detailsButton {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+}
+
+.detailsButton:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+.deleteButton {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.deleteButton:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  width: 90%;
+  max-width: 600px;
+  box-shadow: var(--box-shadow);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.detailModal {
+  max-width: 900px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--light-gray);
+  position: sticky;
+  top: 0;
+  background-color: var(--background);
+  z-index: 10;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: var(--secondary);
+}
+
+.modalContent {
+  padding: 1.25rem;
+}
+
+/* Form styles */
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.formRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.formRow .formGroup {
+  flex: 1;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--light-gray);
+  border-radius: var(--border-radius);
+  font-family: inherit;
+  font-size: 0.875rem;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.helperText {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--secondary);
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.checkboxLabel {
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.submitButton {
+  padding: 0.75rem 1.25rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex-grow: 1;
+  font-family: var(--font-geist-sans);
+}
+
+.submitButton:hover {
+  background-color: var(--primary-dark);
+}
+
+.cancelButton {
+  padding: 0.75rem 1.25rem;
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--light-gray);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: var(--font-geist-sans);
+}
+
+.cancelButton:hover {
+  background-color: var(--light-gray);
+}
+
+/* Detail modal styles */
+.networkInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.infoSection {
+  border: 1px solid var(--light-gray);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.infoSectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+}
+
+.infoRow {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--light-gray);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.infoRow:last-child,
+.infoRow:nth-last-child(2):nth-child(odd) {
+  border-bottom: none;
+}
+
+.infoRow:nth-child(odd) {
+  border-right: 1px solid var(--light-gray);
+}
+
+.infoLabel {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  font-weight: 500;
+}
+
+.infoValue {
+  font-size: 0.9375rem;
+}
+
+/* Network diagram */
+.diagramContainer {
+  padding: 1rem;
+}
+
+.vcnBox {
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.vcnHeader {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+  padding: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+  border-bottom: 1px solid var(--primary);
+}
+
+.vcnCidr {
+  font-size: 0.75rem;
+  font-weight: normal;
+  margin-top: 0.25rem;
+  font-family: var(--font-geist-mono);
+}
+
+.vcnContent {
+  padding: 1.5rem;
+  min-height: 150px;
+  position: relative;
+}
+
+.gatewayBox {
+  position: absolute;
+  top: 0;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--success);
+  padding: 0.5rem;
+  border-radius: 8px;
+  transform: translateY(-50%);
+}
+
+.gatewayTitle {
+  font-size: 0.75rem;
+  color: var(--success);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.internetIcon {
+  font-size: 1.25rem;
+}
+
+.subnetsSection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.subnetBox {
+  background-color: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  padding: 0.75rem;
+  min-width: 180px;
+  flex-grow: 1;
+}
+
+.subnetTitle {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.subnetCidr {
+  font-size: 0.75rem;
+  font-family: var(--font-geist-mono);
+  color: var(--secondary);
+}
+
+.noSubnetsMessage {
+  font-style: italic;
+  color: var(--secondary);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Security Lists */
+.securityList {
+  border: 1px solid var(--light-gray);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.securityListHeader {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.rulesTable {
+  padding: 0.5rem;
+  overflow-x: auto;
+}
+
+.rulesTableContent {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.rulesTableContent th,
+.rulesTableContent td {
+  padding: 0.625rem;
+  text-align: left;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.rulesTableContent th {
+  font-weight: 600;
+  color: var(--secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.rulesTableContent tr:last-child td {
+  border-bottom: none;
+}
+
+.ruleBadge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ingressBadge {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+}
+
+.egressBadge {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.emptySecurityMessage {
+  font-style: italic;
+  color: var(--secondary);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Action buttons in detail view */
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: flex-end;
+}
+
+.actionLink {
+  padding: 0.75rem 1.25rem;
+  background-color: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-geist-sans);
+  text-decoration: none;
+}
+
+.actionLink:hover {
+  background-color: var(--primary);
+  color: white;
+}
+
+.deleteNetworkButton {
+  padding: 0.75rem 1.25rem;
+  background-color: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-geist-sans);
+}
+
+.deleteNetworkButton:hover {
+  background-color: var(--danger);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .infoRow:nth-child(odd) {
+    border-right: none;
+  }
+
+  .infoRow:not(:last-child) {
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .formRow {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .input,
+  .select {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--dark-gray);
+  }
+
+  .cidrCode,
+  .networkCode {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .infoSectionTitle,
+  .securityListHeader {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  .vcnHeader {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+
+  .gatewayBox {
+    background-color: rgba(16, 185, 129, 0.2);
+  }
+
+  .subnetBox {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+} 

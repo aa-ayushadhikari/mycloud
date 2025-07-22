@@ -1,0 +1,327 @@
+/* Action buttons */
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionButton {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.deleteButton {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.deleteButton:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+/* CIDR code display */
+.cidrCode {
+  font-family: var(--font-geist-mono);
+  background-color: var(--light-gray);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+}
+
+/* Boolean indicator */
+.booleanIndicator {
+  font-weight: 700;
+}
+
+/* Network diagram */
+.networkDiagramContainer {
+  margin-top: 2rem;
+  margin-bottom: 3rem;
+}
+
+.networkDiagram {
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.cloudBoundary {
+  border: 2px dashed var(--secondary);
+  border-radius: 16px;
+  padding: 3rem 2rem 2rem;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.cloudLabel {
+  position: absolute;
+  top: -0.75rem;
+  left: 1.5rem;
+  background-color: var(--background);
+  padding: 0 0.75rem;
+  color: var(--secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.networkBox {
+  width: calc(33.333% - 1.5rem);
+  min-width: 250px;
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.networkBoxHeader {
+  padding: 0.75rem;
+  background-color: rgba(0, 102, 255, 0.1);
+  border-bottom: 1px solid var(--primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.networkName {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.networkType {
+  font-size: 0.75rem;
+  color: var(--secondary);
+}
+
+.networkBoxContent {
+  padding: 0.75rem;
+}
+
+.networkDetail {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.networkDetail span:first-child {
+  color: var(--secondary);
+}
+
+.networkDetail code {
+  font-family: var(--font-geist-mono);
+}
+
+.internetConnection {
+  position: relative;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.connectionLine {
+  height: 30px;
+  width: 2px;
+  background-color: var(--primary);
+}
+
+.internetIcon {
+  position: absolute;
+  bottom: 0;
+  font-size: 1.25rem;
+}
+
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  width: 90%;
+  max-width: 550px;
+  box-shadow: var(--box-shadow);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: var(--secondary);
+}
+
+.modalContent {
+  padding: 1.25rem;
+}
+
+/* Form styles */
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.formRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.formRow .formGroup {
+  flex: 1;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--light-gray);
+  border-radius: var(--border-radius);
+  font-family: inherit;
+  font-size: 0.875rem;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.helperText {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--secondary);
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.checkboxLabel {
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.submitButton {
+  padding: 0.75rem 1.25rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex-grow: 1;
+  font-family: var(--font-geist-sans);
+}
+
+.submitButton:hover {
+  background-color: var(--primary-dark);
+}
+
+.cancelButton {
+  padding: 0.75rem 1.25rem;
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--light-gray);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: var(--font-geist-sans);
+}
+
+.cancelButton:hover {
+  background-color: var(--light-gray);
+}
+
+.errorMessage {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--danger);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .formRow {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .networkBox {
+    width: 100%;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .input,
+  .select {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--dark-gray);
+  }
+
+  .cidrCode {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+} 
