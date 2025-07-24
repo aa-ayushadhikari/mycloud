@@ -1,16 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
+import { useSubscription } from '../../hooks/useSubscription';
 import styles from '../dashboard.module.css';
 
 const DashboardHeader = () => {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
+  const { userSubscription, getCurrentTierDetails } = useSubscription();
   const router = useRouter();
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [tierName, setTierName] = useState('');
+  const [tierClass, setTierClass] = useState('');
   
   // Get page title based on the current path
   const getPageTitle = () => {
@@ -18,6 +22,53 @@ const DashboardHeader = () => {
     const path = pathname.split('/').pop();
     return path.charAt(0).toUpperCase() + path.slice(1);
   };
+  
+  // Get subscription tier name and set appropriate class
+  useEffect(() => {
+    if (userSubscription) {
+      const currentTier = getCurrentTierDetails();
+      let tierId = '';
+      
+      if (currentTier && currentTier.name) {
+        setTierName(currentTier.name);
+        tierId = currentTier.id;
+      } else {
+        // Fallback to tier ID if name is not available
+        tierId = userSubscription.tier?.id || userSubscription.tier || 'free';
+        
+        // Map tier ID to a display name
+        const tierMap = {
+          'free': 'Freemium',
+          'startup': 'Startup Tier',
+          'basic': 'Basic Tier',
+          'gold': 'Gold Tier'
+        };
+        
+        setTierName(tierMap[tierId] || 'Free Tier');
+      }
+      
+      // Set the appropriate CSS class based on tier
+      switch(tierId) {
+        case 'free':
+          setTierClass(styles.tierFreemium);
+          break;
+        case 'startup':
+          setTierClass(styles.tierStartup);
+          break;
+        case 'basic':
+          setTierClass(styles.tierBasic);
+          break;
+        case 'gold':
+          setTierClass(styles.tierGold);
+          break;
+        default:
+          setTierClass(styles.tierFreemium);
+      }
+    } else {
+      setTierName('Freemium');
+      setTierClass(styles.tierFreemium);
+    }
+  }, [userSubscription, getCurrentTierDetails]);
   
   // Toggle dropdown
   const toggleDropdown = () => {
@@ -31,19 +82,21 @@ const DashboardHeader = () => {
 
   // Handle logout
   const handleLogout = () => {
-    signOut();
+    logout();
     router.push('/');
   };
 
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (!user || !user.name) return '?';
-    return user.name
-      .split(' ')
-      .map(name => name[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    if (!user) return '?';
+    if (user.firstName && user.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    } else if (user.firstName) {
+      return user.firstName.substring(0, 2).toUpperCase();
+    } else if (user.email) {
+      return user.email.substring(0, 2).toUpperCase();
+    }
+    return '?';
   };
   
   return (
@@ -55,7 +108,14 @@ const DashboardHeader = () => {
         >
           ☰
         </button>
-        <h1 className={styles.pageTitle}>{getPageTitle()}</h1>
+        <div className={styles.titleContainer}>
+          <h1 className={styles.pageTitle}>{getPageTitle()}</h1>
+          {tierName && (
+            <span className={`${styles.tierBadge} ${tierClass}`}>
+              {tierName}
+            </span>
+          )}
+        </div>
       </div>
       
       <div className={styles.headerRight}>
@@ -66,7 +126,7 @@ const DashboardHeader = () => {
             aria-label="User menu"
           >
             <div className={styles.userAvatar}>{getUserInitials()}</div>
-            <span className={styles.userName}>{user?.name}</span>
+            <span className={styles.userName}>{user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 'User'}</span>
           </button>
           
           {dropdownOpen && (

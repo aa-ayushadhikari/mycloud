@@ -27,11 +27,19 @@ export default function SignInPage() {
     e.preventDefault();
     setError('');
     
+    if (!formData.email || !formData.password) {
+      setError('Email and password are required');
+      return;
+    }
+
     try {
-      await login(formData.email, formData.password);
+      console.log('Attempting login with:', { email: formData.email });
+      const userData = await login(formData.email, formData.password);
+      console.log('Login successful:', userData);
       router.push('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      console.error('Login error in component:', err);
+      setError(err.message || 'Login failed. Please check your credentials.');
     }
   };
 
@@ -86,8 +94,9 @@ export default function SignInPage() {
           
           <button 
             type="submit" 
-            className={styles.authButton}
+            className={`${styles.authButton} btn-primary`}
             disabled={loading}
+            style={{backgroundColor: 'var(--primary)'}}
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>

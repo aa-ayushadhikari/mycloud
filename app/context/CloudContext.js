@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { subscriptionService } from '../services/subscriptionService';
 
 const CloudContext = createContext();
 
@@ -11,9 +13,9 @@ export const CloudProvider = ({ children }) => {
   const [networks, setNetworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [resources, setResources] = useState({
-    cpu: { total: 20, used: 0 },
-    memory: { total: 64, used: 0 },
-    storage: { total: 1024, used: 0 },
+    cpu: { total: 1, used: 0 },
+    memory: { total: 0.5, used: 0 },
+    storage: { total: 50, used: 0 },
   });
 
   // Usage metrics with randomized data for simulation
@@ -32,19 +34,150 @@ export const CloudProvider = ({ children }) => {
     })).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   }
 
-  // Load data from localStorage
+  // Get the current user from auth context
+  const { user } = useAuth();
+  
+  // Load data from localStorage and update with subscription data
   useEffect(() => {
-    const storedVMs = localStorage.getItem('mycloud_vms');
-    const storedStorages = localStorage.getItem('mycloud_storages');
-    const storedNetworks = localStorage.getItem('mycloud_networks');
-    const storedResources = localStorage.getItem('mycloud_resources');
-
+    if (!user) return;
+    
+    const userId = user.id || user.email;
+    const storedVMs = localStorage.getItem(`mycloud_vms_${userId}`);
+    const storedStorages = localStorage.getItem(`mycloud_storages_${userId}`);
+    const storedNetworks = localStorage.getItem(`mycloud_networks_${userId}`);
+    
     if (storedVMs) setVirtualMachines(JSON.parse(storedVMs));
     if (storedStorages) setStorages(JSON.parse(storedStorages));
     if (storedNetworks) setNetworks(JSON.parse(storedNetworks));
-    if (storedResources) setResources(JSON.parse(storedResources));
 
-    setLoading(false);
+    // Load subscription data to get resource limits
+    const loadSubscriptionData = async () => {
+      try {
+        // Get subscription tiers and user's current subscription
+        let subscriptionTiers;
+        let userSubscription;
+        
+        try {
+          // Fetch subscription data
+          const tiersResponse = await subscriptionService.getAllSubscriptionTiers();
+          const userSubResponse = await subscriptionService.getUserSubscription();
+          
+          // Check if response is an array or contains a subscriptions array
+          if (Array.isArray(tiersResponse)) {
+            subscriptionTiers = tiersResponse;
+          } else if (tiersResponse && tiersResponse.subscriptions && Array.isArray(tiersResponse.subscriptions)) {
+            subscriptionTiers = tiersResponse.subscriptions;
+          } else {
+            // Fallback to mock data if API response format is unexpected
+            throw new Error("Unexpected API response format");
+          }
+          
+          // Check user subscription format
+          if (userSubResponse && userSubResponse.tier) {
+            userSubscription = userSubResponse;
+          } else if (userSubResponse && userSubResponse.subscription && userSubResponse.subscription.tier) {
+            userSubscription = userSubResponse.subscription;
+          } else {
+            userSubscription = { tier: 'free' }; // Default
+          }
+        } catch (error) {
+          console.warn("Could not fetch subscription data from API, using mock data", error);
+          subscriptionTiers = subscriptionService.getSubscriptionTiers();
+          userSubscription = { tier: 'free' }; // Default to free tier
+        }
+        
+        // Log the subscription data for debugging
+        console.log("Subscription tiers:", subscriptionTiers);
+        console.log("User subscription:", userSubscription);
+        
+        // Find the user's subscription tier details
+        // Make sure subscriptionTiers is an array before calling find
+        // Extract the tier ID based on API response format
+        const tierIdentifier = userSubscription.tier?.id || userSubscription.tier;
+        
+        const userTier = Array.isArray(subscriptionTiers) 
+          ? (subscriptionTiers.find(tier => tier.id === tierIdentifier) || 
+             subscriptionTiers.find(tier => tier.id === 'free'))
+          : null;
+        
+                  if (userTier) {
+            // Update resources based on subscription
+            const storedResources = localStorage.getItem(`mycloud_resources_${userId}`);
+            
+            // Extract resource values safely with defaults
+            const cpuTotal = userTier.features?.compute?.vCPU || 
+                            userTier.resources?.compute?.vCpuCores || 
+                            userTier.resources?.cpu?.total || 1;
+                            
+            const memoryTotal = userTier.features?.compute?.ram || 
+                               userTier.resources?.compute?.ramGB || 
+                               userTier.resources?.memory?.total || 0.5;
+                               
+            const storageTotal = userTier.features?.storage?.total || 
+                                userTier.resources?.storage?.totalGB || 
+                                userTier.resources?.storage?.total || 50;
+            
+            let resourcesData = {
+              cpu: { 
+                total: cpuTotal,
+                used: 0 
+              },
+              memory: { 
+                total: memoryTotal,
+                used: 0 
+              },
+              storage: { 
+                total: storageTotal,
+                used: 0 
+              }
+            };
+            
+            // Check if API returned quota usage data
+            if (userSubscription.quotaUsage) {
+              // Use API data for resource usage
+              resourcesData = {
+                cpu: { 
+                  total: userTier.features?.compute?.vCPU || cpuTotal,
+                  used: userSubscription.quotaUsage.compute?.vCpuCores?.used || 0
+                },
+                memory: { 
+                  total: userTier.features?.compute?.ram || memoryTotal,
+                  used: userSubscription.quotaUsage.compute?.ramGB?.used || 0
+                },
+                storage: { 
+                  total: userTier.features?.storage?.total || storageTotal,
+                  used: userSubscription.quotaUsage.storage?.totalGB?.used || 0
+                }
+              };
+            } else if (storedResources) {
+              // Fall back to stored resources if API doesn't provide quota data
+              const parsedResources = JSON.parse(storedResources);
+              resourcesData = {
+                cpu: { 
+                  total: userTier.features?.compute?.vCPU || cpuTotal,
+                  used: Math.min(parsedResources.cpu.used, userTier.features?.compute?.vCPU || cpuTotal)
+                },
+                memory: { 
+                  total: userTier.features?.compute?.ram || memoryTotal,
+                  used: Math.min(parsedResources.memory.used, userTier.features?.compute?.ram || memoryTotal)
+                },
+                storage: { 
+                  total: userTier.features?.storage?.total || storageTotal,
+                  used: Math.min(parsedResources.storage.used, userTier.features?.storage?.total || storageTotal)
+                }
+              };
+            }
+          
+          setResources(resourcesData);
+        }
+      } catch (error) {
+        console.error("Error loading subscription data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadSubscriptionData();
 
     // Update metrics periodically to simulate real-time data
     const interval = setInterval(() => {
@@ -52,17 +185,18 @@ export const CloudProvider = ({ children }) => {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   // Update localStorage whenever state changes
   useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('mycloud_vms', JSON.stringify(virtualMachines));
-      localStorage.setItem('mycloud_storages', JSON.stringify(storages));
-      localStorage.setItem('mycloud_networks', JSON.stringify(networks));
-      localStorage.setItem('mycloud_resources', JSON.stringify(resources));
+    if (!loading && user) {
+      const userId = user.id || user.email;
+      localStorage.setItem(`mycloud_vms_${userId}`, JSON.stringify(virtualMachines));
+      localStorage.setItem(`mycloud_storages_${userId}`, JSON.stringify(storages));
+      localStorage.setItem(`mycloud_networks_${userId}`, JSON.stringify(networks));
+      localStorage.setItem(`mycloud_resources_${userId}`, JSON.stringify(resources));
     }
-  }, [virtualMachines, storages, networks, resources, loading]);
+  }, [virtualMachines, storages, networks, resources, loading, user]);
 
   // Update metrics with new random data points
   const updateMetrics = () => {
@@ -209,10 +343,13 @@ export const CloudProvider = ({ children }) => {
       storage: { total: 1024, used: 0 },
     });
     
-    localStorage.removeItem('mycloud_vms');
-    localStorage.removeItem('mycloud_storages');
-    localStorage.removeItem('mycloud_networks');
-    localStorage.removeItem('mycloud_resources');
+    if (user) {
+      const userId = user.id || user.email;
+      localStorage.removeItem(`mycloud_vms_${userId}`);
+      localStorage.removeItem(`mycloud_storages_${userId}`);
+      localStorage.removeItem(`mycloud_networks_${userId}`);
+      localStorage.removeItem(`mycloud_resources_${userId}`);
+    }
   };
 
   const value = {

@@ -1,47 +1,87 @@
 import axios from 'axios';
 import apiClient from './apiClient';
 
-const API_URL = 'http://140.245.21.155:5001/api';
+// Use the API URL from environment variables
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const authService = {
   async register(userData) {
     try {
-      const response = await axios.post(`${API_URL}/auth/signup`, userData);
-      if (response.data.token) {
-        localStorage.setItem('user', JSON.stringify(response.data));
+      const response = await fetch(`${API_URL}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
+          password: userData.password // Must be at least 8 chars with uppercase, lowercase, number and special character
+        })
+      });
+      
+      const data = await response.json();
+      
+      // Check if response was successful
+      if (!response.ok) {
+        throw new Error(data.message || `Registration failed with status ${response.status}`);
       }
-      return response.data;
+      
+      if (data.token) {
+        localStorage.setItem('user', JSON.stringify(data));
+      }
+      return data;
     } catch (error) {
-      throw error.response?.data || error.message;
+      console.error("Registration error:", error);
+      throw error;
     }
   },
 
   async login(email, password) {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, { email, password });
-      if (response.data.token) {
-        localStorage.setItem('user', JSON.stringify(response.data));
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
+      });
+      
+      const data = await response.json();
+      
+      // Check if response was successful
+      if (!response.ok) {
+        throw new Error(data.message || `Login failed with status ${response.status}`);
       }
-      return response.data;
+      
+      if (data.token) {
+        localStorage.setItem('user', JSON.stringify(data));
+      }
+      return data;
     } catch (error) {
-      throw error.response?.data || error.message;
+      console.error("Login error:", error);
+      throw error;
     }
   },
 
   logout() {
-    const token = this.getCurrentUser()?.token;
     localStorage.removeItem('user');
-    
-    if (token) {
-      return axios.post(`${API_URL}/auth/logout`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-    }
     return Promise.resolve();
   },
 
   getCurrentUser() {
-    return JSON.parse(localStorage.getItem('user'));
+    if (typeof window !== 'undefined') {
+      try {
+        return JSON.parse(localStorage.getItem('user'));
+      } catch (error) {
+        console.error('Error parsing user from localStorage:', error);
+        return null;
+      }
+    }
+    return null;
   },
 
   async getProfile() {

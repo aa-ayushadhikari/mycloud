@@ -27,7 +27,7 @@ const Dashboard = () => {
   return (
     <div>
       <div className={styles.welcomeSection}>
-        <h2>Good {timeOfDay}, {user?.name || 'User'}</h2>
+        <h2>Good {timeOfDay}, {user ? (user.firstName ? user.firstName : user.email ? user.email.split('@')[0] : 'User') : 'User'}</h2>
         <p className={styles.welcomeDescription}>
           Welcome to your MyCloud dashboard. Here's an overview of your resources and services.
         </p>

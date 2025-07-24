@@ -25,10 +25,14 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       const data = await authService.login(email, password);
+      if (data.error) {
+        setError(data.message || 'Login failed');
+        throw new Error(data.message || 'Login failed');
+      }
       setUser(data);
       return data;
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.message || 'Login failed');
       throw err;
     } finally {
       setLoading(false);
@@ -41,10 +45,14 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       const data = await authService.register(userData);
+      if (data.error) {
+        setError(data.message || 'Registration failed');
+        throw new Error(data.message || 'Registration failed');
+      }
       setUser(data);
       return data;
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.message || 'Registration failed');
       throw err;
     } finally {
       setLoading(false);

@@ -1,61 +1,95 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import styles from './Pricing.module.css';
 import Link from 'next/link';
+import { subscriptionService } from '../services/subscriptionService';
+import { useAuth } from '../context/AuthContext';
 
 const Pricing = () => {
-  const pricingPlans = [
-    {
-      id: 'basic',
-      name: 'Basic',
-      description: 'For personal projects and small startups',
-      price: '29',
-      features: [
-        '2 vCPU cores',
-        '4 GB RAM',
-        '100 GB Storage',
-        '500 GB Data transfer',
-        'Basic monitoring',
-        'Community support'
-      ],
-      isPopular: false,
-      ctaText: 'Start free trial'
-    },
-    {
-      id: 'professional',
-      name: 'Professional',
-      description: 'For growing businesses and teams',
-      price: '99',
-      features: [
-        '4 vCPU cores',
-        '16 GB RAM',
-        '500 GB Storage',
-        '2 TB Data transfer',
-        'Advanced monitoring',
-        '24/7 email support',
-        'Auto-scaling',
-        'Load balancing'
-      ],
-      isPopular: true,
-      ctaText: 'Start free trial'
-    },
-    {
-      id: 'enterprise',
-      name: 'Enterprise',
-      description: 'For large-scale applications and organizations',
-      price: 'Custom',
-      features: [
-        'Dedicated resources',
-        'Unlimited storage',
-        'Unlimited data transfer',
-        'Enterprise-grade security',
-        'Priority support',
-        'Dedicated account manager',
-        'Custom SLAs',
-        'Advanced compliance'
-      ],
-      isPopular: false,
-      ctaText: 'Contact sales'
-    }
-  ];
+  const { isAuthenticated } = useAuth();
+  const [pricingPlans, setPricingPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSubscriptionTiers = async () => {
+      try {
+        setLoading(true);
+        try {
+          // Try to get from API first
+          const tiers = await subscriptionService.getAllSubscriptionTiers();
+          setPricingPlans(formatPricingPlans(tiers));
+        } catch (error) {
+          console.warn('Could not load subscription tiers from API, using mock data');
+          // Fallback to mock data
+          const mockTiers = subscriptionService.getSubscriptionTiers();
+          setPricingPlans(formatPricingPlans(mockTiers));
+        }
+      } catch (error) {
+        console.error('Error loading subscription tiers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSubscriptionTiers();
+  }, []);
+
+  // Format subscription tiers to match the pricing UI format
+  const formatPricingPlans = (tiers) => {
+    return tiers.map(tier => {
+      const features = [];
+      
+      // Add compute features
+      features.push(`${tier.features.compute.vCPU} vCPU cores`);
+      features.push(`${tier.features.compute.ram} GB RAM`);
+      features.push(`Max ${tier.features.compute.instances} instance${tier.features.compute.instances > 1 ? 's' : ''}`);
+      if (tier.features.compute.timeLimit) {
+        features.push(`${tier.features.compute.timeLimit} minutes time limit`);
+      } else {
+        features.push('No time limit');
+      }
+      
+      // Add storage features
+      features.push(`${tier.features.storage.total} GB total storage`);
+      
+      // Add network features
+      features.push(`${tier.features.network.dataTransfer} GB data transfer`);
+      features.push(`${tier.features.network.publicIPs} public IP${tier.features.network.publicIPs > 1 ? 's' : ''}`);
+      
+      return {
+        id: tier.id,
+        name: tier.name,
+        description: tier.id === 'free' 
+          ? 'Try our cloud platform at no cost' 
+          : tier.id === 'startup' 
+            ? 'For personal projects and small startups'
+            : tier.id === 'basic'
+              ? 'For growing businesses and teams'
+              : 'For large-scale applications',
+        price: tier.price === 0 ? 'Free' : `${tier.price}`,
+        features: features,
+        isPopular: tier.id === 'basic',
+        ctaText: tier.id === 'free' 
+          ? 'Sign up free' 
+          : isAuthenticated() 
+            ? 'Upgrade plan' 
+            : 'Start now'
+      };
+    });
+  };
+
+  if (loading) {
+    return (
+      <section id="pricing" className={styles.pricingSection}>
+        <div className={styles.container}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Loading pricing plans...</h2>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="pricing" className={styles.pricingSection}>
@@ -82,9 +116,9 @@ const Pricing = () => {
               </div>
               
               <div className={styles.planPricing}>
-                <span className={styles.currencySymbol}>$</span>
+                {plan.price !== 'Free' && <span className={styles.currencySymbol}>$</span>}
                 <span className={styles.priceValue}>{plan.price}</span>
-                <span className={styles.billingPeriod}>/month</span>
+                {plan.price !== 'Free' && <span className={styles.billingPeriod}>/month</span>}
               </div>
 
               <ul className={styles.featuresList}>
@@ -98,7 +132,7 @@ const Pricing = () => {
 
               <div className={styles.ctaWrapper}>
                 <Link 
-                  href={plan.id === 'enterprise' ? '/contact' : '/signup'} 
+                  href={isAuthenticated() ? '/dashboard/billing' : '/signup'} 
                   className={`${styles.ctaButton} ${plan.isPopular ? styles.primaryCta : ''}`}
                 >
                   {plan.ctaText}

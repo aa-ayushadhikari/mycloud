@@ -1,0 +1,299 @@
+/* Billing Page Styles */
+.contentContainer {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.pageHeader {
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--light-gray);
+  padding-bottom: 1.5rem;
+}
+
+.pageHeader h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+
+.pageHeader p {
+  color: var(--secondary);
+  font-size: 1rem;
+}
+
+.section {
+  margin-bottom: 3rem;
+}
+
+.section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+}
+
+.section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+}
+
+.section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.75rem;
+  color: var(--foreground);
+}
+
+.card {
+  background-color: var(--background);
+  border: 1px solid var(--light-gray);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 100%;
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+}
+
+.selectedCard {
+  border: 2px solid var(--primary);
+}
+
+.selectedCard::after {
+  content: "✓";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.cardContent {
+  padding: 1.75rem;
+}
+
+.pricingText {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0.75rem 0 1.25rem;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  background-color: var(--success);
+  color: white;
+  border-radius: 2rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
+.resourceList {
+  list-style-type: none;
+  padding: 0;
+  margin: 1.25rem 0;
+}
+
+.resourceList li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--light-gray);
+  color: var(--foreground);
+}
+
+.resourceList li:last-child {
+  border-bottom: none;
+}
+
+.resourceList li span:first-child {
+  color: var(--secondary);
+}
+
+.featureList {
+  list-style-type: none;
+  padding: 0;
+  margin: 1.25rem 0;
+}
+
+.featureList li {
+  padding: 0.5rem 0;
+  position: relative;
+  padding-left: 1.75rem;
+  color: var(--foreground);
+  line-height: 1.5;
+}
+
+.featureList li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: bold;
+}
+
+.button {
+  display: block;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.primaryButton {
+  background-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 102, 255, 0.2);
+}
+
+.primaryButton:hover {
+  background-color: var(--primary-dark);
+  box-shadow: 0 6px 8px rgba(0, 102, 255, 0.25);
+}
+
+.outlineButton {
+  background-color: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+
+.outlineButton:hover {
+  background-color: rgba(0, 102, 255, 0.05);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.gridContainer {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .gridContainer {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .gridContainer {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--light-gray);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0.75rem 0;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 4px;
+  transition: width 0.5s ease-out;
+}
+
+.alertBox {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.alertBox::before {
+  margin-right: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.alertSuccess {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--success);
+  color: var(--success);
+}
+
+.alertSuccess::before {
+  content: "✓";
+}
+
+.alertDanger {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+.alertDanger::before {
+  content: "!";
+}
+
+/* Loading state */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.loader {
+  border: 3px solid var(--light-gray);
+  border-radius: 50%;
+  border-top: 3px solid var(--primary);
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* For when there's no usage data */
+.emptyState {
+  padding: 2.5rem;
+  text-align: center;
+  background-color: var(--light-gray);
+  border-radius: 12px;
+  color: var(--secondary);
+  font-style: italic;
+}

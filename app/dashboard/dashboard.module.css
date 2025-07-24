@@ -94,9 +94,59 @@
   font-size: 1.5rem;
 }
 
+.titleContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .pageTitle {
   font-weight: 600;
   font-size: 1.25rem;
+}
+
+.tierBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: rgba(0, 102, 255, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(0, 102, 255, 0.2);
+  white-space: nowrap;
+}
+
+/* Tier-specific badge styles */
+.tierFreemium {
+  background-color: rgba(107, 114, 128, 0.1);
+  color: var(--secondary);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.tierStartup {
+  background-color: rgba(0, 102, 255, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(0, 102, 255, 0.2);
+}
+
+.tierBasic {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.tierGold {
+  background-color: rgba(245, 158, 11, 0.08);
+  color: #D4AF37; /* Golden color */
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  font-weight: 700;
+  background-image: linear-gradient(135deg, #D4AF37 0%, #F1C40F 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  border: 1px solid #D4AF37;
+  text-shadow: 0px 0px 1px rgba(212, 175, 55, 0.1);
 }
 
 .headerRight {

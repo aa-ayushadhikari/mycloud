@@ -26,6 +26,39 @@ export default function SignUp() {
     }));
   };
 
+  const validatePassword = (password) => {
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    const isLongEnough = password.length >= 8;
+
+    if (!isLongEnough) {
+      return 'Password must be at least 8 characters';
+    }
+    if (!hasUpperCase) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!hasLowerCase) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!hasNumber) {
+      return 'Password must contain at least one number';
+    }
+    if (!hasSpecialChar) {
+      return 'Password must contain at least one special character';
+    }
+
+    return null;
+  };
+
+  const validateName = (name, fieldName) => {
+    if (name.length < 2 || name.length > 50) {
+      return `${fieldName} must be between 2 and 50 characters`;
+    }
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -36,13 +69,35 @@ export default function SignUp() {
       return;
     }
     
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+    // Validate first name and last name
+    const firstNameError = validateName(formData.firstName, 'First name');
+    if (firstNameError) {
+      setError(firstNameError);
+      return;
+    }
+
+    const lastNameError = validateName(formData.lastName, 'Last name');
+    if (lastNameError) {
+      setError(lastNameError);
       return;
     }
     
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
+    // Validate password
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
     
@@ -54,10 +109,13 @@ export default function SignUp() {
         password: formData.password
       };
       
-      await register(userData);
+      console.log('Attempting registration with:', { email: userData.email, firstName: userData.firstName });
+      const result = await register(userData);
+      console.log('Registration successful:', result);
       router.push('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      console.error('Registration error in component:', err);
+      setError(err.message || 'Registration failed. Please try again.');
     }
   };
 
@@ -150,8 +208,9 @@ export default function SignUp() {
           
           <button 
             type="submit" 
-            className={styles.authButton}
+            className={`${styles.authButton} btn-primary`}
             disabled={loading}
+            style={{backgroundColor: 'var(--primary)'}}
           >
             {loading ? 'Creating Account...' : 'Create Account'}
           </button>
