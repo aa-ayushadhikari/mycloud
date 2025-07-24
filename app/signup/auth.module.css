@@ -4,18 +4,24 @@
   align-items: center;
   min-height: 100vh;
   padding: 2rem;
-  background-color: #f5f7fa;
+  background-color: #0066cc;
+  background-image: linear-gradient(rgba(0, 51, 102, 0.8), rgba(0, 102, 204, 0.8)),
+                    linear-gradient(rgba(0, 0, 0, 0.2) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 0, 0, 0.2) 1px, transparent 1px);
+  background-size: 100% 100%, 20px 20px, 20px 20px;
+  position: relative;
 }
 
 .authCard {
-  background-color: white;
+  background-color: #121826;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   padding: 2.5rem;
   width: 100%;
   max-width: 480px;
   position: relative;
   z-index: 10;
+  color: #ffffff;
 }
 
 .authHeader {
@@ -23,81 +29,106 @@
   margin-bottom: 2rem;
 }
 
-.authTitle {
+.brandTitle {
   font-size: 2rem;
   font-weight: 700;
+  margin-bottom: 1rem;
+  color: #3b82f6;
+  background: linear-gradient(90deg, #3b82f6, #00C9FF);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.authTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
   margin-bottom: 0.5rem;
-  color: #1a202c;
+  color: #ffffff;
 }
 
 .authSubtitle {
-  font-size: 1rem;
-  color: #718096;
+  font-size: 0.9rem;
+  color: #9ca3af;
   margin-bottom: 0;
 }
 
 .authForm {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.75rem;
+  width: 100%;
 }
 
 .formRow {
   display: flex;
   gap: 1rem;
+  width: 100%;
+  margin-bottom: 0.5rem;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
   flex: 1;
+  margin-bottom: 0.75rem;
+  width: 100%;
 }
 
 .label {
   font-size: 0.875rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
-  color: #4a5568;
+  color: #ffffff;
 }
 
 .input {
   padding: 0.75rem 1rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #2e3646;
   border-radius: 6px;
   font-size: 1rem;
+  background-color: #1a202c;
+  color: #ffffff;
   transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input::placeholder {
+  color: #6b7280;
 }
 
 .input:focus {
   outline: none;
-  border-color: #3182ce;
-  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
 
 .errorMessage {
   padding: 0.75rem 1rem;
-  background-color: #fed7d7;
+  background-color: rgba(239, 68, 68, 0.2);
   border-radius: 6px;
-  color: #c53030;
+  color: #f87171;
   margin-bottom: 1.5rem;
   font-size: 0.875rem;
 }
 
 .authButton {
   padding: 0.875rem;
-  background-color: var(--primary);
+  background-color: #3b82f6;
   color: white;
   border: none;
-  border-radius: var(--border-radius);
+  border-radius: 6px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s;
   margin-top: 0.5rem;
+  width: 100%;
 }
 
 .authButton:hover {
-  background-color: var(--primary-dark);
+  background-color: #2563eb;
 }
 
 .authButton:disabled {
@@ -105,29 +136,39 @@
   cursor: not-allowed;
 }
 
+.demoMessage {
+  margin-top: 1.25rem;
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  border-top: 1px solid #2e3646;
+  border-bottom: 1px solid #2e3646;
+}
+
 .authFooter {
   margin-top: 1.5rem;
   text-align: center;
   font-size: 0.875rem;
-  color: #718096;
+  color: #9ca3af;
 }
 
 .link {
-  color: var(--primary);
+  color: #3b82f6;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
 }
 
 .link:hover {
-  color: var(--primary-dark);
+  color: #60a5fa;
   text-decoration: underline;
 }
 
 .forgotPassword {
   text-align: right;
   margin-top: -0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
   font-size: 0.875rem;
 }
 
@@ -139,6 +180,10 @@
   
   .formRow {
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0;
+  }
+  
+  .formRow .formGroup {
+    margin-bottom: 0.75rem;
   }
 } 

@@ -123,7 +123,8 @@ export default function SignUp() {
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
         <div className={styles.authHeader}>
-          <h1 className={styles.authTitle}>Create MyCloud Account</h1>
+          <h1 className={styles.brandTitle}>MyCloud</h1>
+          <h2 className={styles.authTitle}>Create Account</h2>
           <p className={styles.authSubtitle}>Get started with your cloud journey</p>
         </div>
         
@@ -144,7 +145,7 @@ export default function SignUp() {
                 value={formData.firstName}
                 onChange={handleChange}
                 className={styles.input}
-                placeholder="John"
+                placeholder="Enter first name"
                 required
               />
             </div>
@@ -158,14 +159,14 @@ export default function SignUp() {
                 value={formData.lastName}
                 onChange={handleChange}
                 className={styles.input}
-                placeholder="Doe"
+                placeholder="Enter last name"
                 required
               />
             </div>
           </div>
           
           <div className={styles.formGroup}>
-            <label htmlFor="email" className={styles.label}>Email</label>
+            <label htmlFor="email" className={styles.label}>Email Address</label>
             <input
               type="email"
               id="email"
@@ -173,7 +174,7 @@ export default function SignUp() {
               value={formData.email}
               onChange={handleChange}
               className={styles.input}
-              placeholder="your.email@example.com"
+              placeholder="Enter your email"
               required
             />
           </div>
@@ -187,7 +188,7 @@ export default function SignUp() {
               value={formData.password}
               onChange={handleChange}
               className={styles.input}
-              placeholder="••••••••"
+              placeholder="Enter password"
               required
             />
           </div>
@@ -201,16 +202,15 @@ export default function SignUp() {
               value={formData.confirmPassword}
               onChange={handleChange}
               className={styles.input}
-              placeholder="••••••••"
+              placeholder="Confirm password"
               required
             />
           </div>
           
           <button 
             type="submit" 
-            className={`${styles.authButton} btn-primary`}
+            className={styles.authButton}
             disabled={loading}
-            style={{backgroundColor: 'var(--primary)'}}
           >
             {loading ? 'Creating Account...' : 'Create Account'}
           </button>
@@ -218,10 +218,7 @@ export default function SignUp() {
         
         <div className={styles.authFooter}>
           <p>
-            Already have an account?{' '}
-            <Link href="/signin" className={styles.link}>
-              Sign in
-            </Link>
+            Already have an account? <Link href="/signin" className={styles.link}>Sign in</Link>
           </p>
         </div>
       </div>

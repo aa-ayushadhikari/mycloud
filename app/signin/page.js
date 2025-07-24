@@ -47,8 +47,9 @@ export default function SignInPage() {
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
         <div className={styles.authHeader}>
-          <h1 className={styles.authTitle}>Sign In to MyCloud</h1>
-          <p className={styles.authSubtitle}>Enter your credentials to access your cloud resources</p>
+          <h1 className={styles.brandTitle}>MyCloud</h1>
+          <h2 className={styles.authTitle}>Welcome back</h2>
+          <p className={styles.authSubtitle}>Sign in to access your cloud services</p>
         </div>
         
         {(error || authError) && (
@@ -59,7 +60,7 @@ export default function SignInPage() {
         
         <form onSubmit={handleSubmit} className={styles.authForm}>
           <div className={styles.formGroup}>
-            <label htmlFor="email" className={styles.label}>Email</label>
+            <label htmlFor="email" className={styles.label}>Email Address</label>
             <input
               type="email"
               id="email"
@@ -67,7 +68,7 @@ export default function SignInPage() {
               value={formData.email}
               onChange={handleChange}
               className={styles.input}
-              placeholder="your.email@example.com"
+              placeholder="Enter your email"
               required
             />
           </div>
@@ -81,7 +82,7 @@ export default function SignInPage() {
               value={formData.password}
               onChange={handleChange}
               className={styles.input}
-              placeholder="••••••••"
+              placeholder="Enter your password"
               required
             />
           </div>
@@ -94,20 +95,20 @@ export default function SignInPage() {
           
           <button 
             type="submit" 
-            className={`${styles.authButton} btn-primary`}
+            className={styles.authButton}
             disabled={loading}
-            style={{backgroundColor: 'var(--primary)'}}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
         
+        <div className={styles.demoMessage}>
+          Demo: Use any email with "test" or "admin" in it
+        </div>
+        
         <div className={styles.authFooter}>
           <p>
-            Don't have an account?{' '}
-            <Link href="/signup" className={styles.link}>
-              Sign up
-            </Link>
+            Don't have an account? <Link href="/signup" className={styles.link}>Sign up</Link>
           </p>
         </div>
       </div>
