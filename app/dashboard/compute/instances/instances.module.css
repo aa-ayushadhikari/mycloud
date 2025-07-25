@@ -240,14 +240,15 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modal {
   background-color: var(--background);
-  border-radius: var(--border-radius);
+  border-radius: 12px;
   width: 90%;
-  max-width: 600px;
-  box-shadow: var(--box-shadow);
+  max-width: 700px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -256,14 +257,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem;
+  padding: 1.5rem 2rem;
   border-bottom: 1px solid var(--light-gray);
 }
 
 .modalTitle {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
+  color: var(--foreground);
 }
 
 .closeButton {
@@ -272,84 +274,240 @@
   cursor: pointer;
   font-size: 1.25rem;
   color: var(--secondary);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background-color: var(--light-gray);
+  color: var(--foreground);
 }
 
 .modalContent {
-  padding: 1.25rem;
+  padding: 2rem;
+}
+
+/* New wizard-style VM creation */
+.wizardContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.wizardHeader {
+  display: flex;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--light-gray);
+  padding-bottom: 1rem;
+}
+
+.wizardStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+  padding: 0 0.5rem;
+}
+
+.wizardStep::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  right: -50%;
+  width: 100%;
+  height: 2px;
+  background-color: var(--light-gray);
+  z-index: 0;
+}
+
+.wizardStep:last-child::after {
+  display: none;
+}
+
+.stepNumber {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--light-gray);
+  color: var(--secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.stepTitle {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  text-align: center;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.activeWizardStep .stepNumber {
+  background-color: var(--primary);
+  color: white;
+}
+
+.activeWizardStep .stepTitle {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.completedStep .stepNumber {
+  background-color: var(--success);
+  color: white;
+}
+
+.completedStep .stepTitle {
+  color: var(--success);
+}
+
+.wizardContent {
+  margin-bottom: 2rem;
+}
+
+.wizardSection {
+  margin-bottom: 2rem;
+}
+
+.wizardSectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wizardSectionIcon {
+  color: var(--primary);
+  font-size: 1.25rem;
 }
 
 /* Form styles */
 .formGroup {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .formRow {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .formRow .formGroup {
   flex: 1;
+  margin-bottom: 0;
 }
 
 .label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.875rem;
+  color: var(--foreground);
 }
 
 .input,
 .select {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--light-gray);
-  border-radius: var(--border-radius);
+  border-radius: 6px;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: 1rem;
   background-color: var(--background);
   color: var(--foreground);
+  transition: all 0.2s ease;
 }
 
 .input:focus,
 .select:focus {
   outline: none;
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
+.infoText {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  margin-top: 0.5rem;
 }
 
 .rangeInput {
   width: 100%;
   cursor: pointer;
   margin-bottom: 0.5rem;
+  -webkit-appearance: none;
+  height: 6px;
+  background: var(--light-gray);
+  border-radius: 3px;
+}
+
+.rangeInput::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
 }
 
 .rangeValue {
-  text-align: right;
+  display: flex;
+  justify-content: space-between;
   font-size: 0.875rem;
   color: var(--secondary);
+  margin-top: 0.75rem;
+}
+
+.rangeValue span:last-child {
+  font-weight: 600;
+  color: var(--foreground);
 }
 
 .formActions {
   display: flex;
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 2rem;
+  justify-content: flex-end;
+  border-top: 1px solid var(--light-gray);
+  padding-top: 1.5rem;
 }
 
 .submitButton {
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1.5rem;
   background-color: var(--primary);
   color: white;
   border: none;
-  border-radius: var(--border-radius);
-  font-weight: 500;
+  border-radius: 6px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
-  flex-grow: 1;
+  transition: all 0.2s ease;
   font-family: var(--font-geist-sans);
+  min-width: 120px;
 }
 
 .submitButton:hover:not(:disabled) {
   background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 102, 255, 0.2);
 }
 
 .submitButton:disabled {
@@ -357,15 +515,31 @@
   cursor: not-allowed;
 }
 
-.cancelButton {
-  padding: 0.75rem 1.25rem;
+.backButton {
+  padding: 0.75rem 1.5rem;
   background-color: transparent;
   color: var(--foreground);
   border: 1px solid var(--light-gray);
-  border-radius: var(--border-radius);
+  border-radius: 6px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  font-family: var(--font-geist-sans);
+}
+
+.backButton:hover {
+  background-color: var(--light-gray);
+}
+
+.cancelButton {
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--light-gray);
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
   font-family: var(--font-geist-sans);
 }
 
@@ -374,116 +548,816 @@
 }
 
 .errorMessage {
-  padding: 0.75rem;
-  margin-bottom: 1rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
   background-color: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: var(--danger);
-  border-radius: var(--border-radius);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.errorMessage::before {
+  content: "!";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: var(--danger);
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+}
+
+/* VM Size selection */
+.vmSizeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.vmSizeCard {
+  border: 1px solid var(--light-gray);
+  border-radius: 8px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.vmSizeCard:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.selectedVmSize {
+  border-color: var(--primary);
+  background-color: rgba(0, 102, 255, 0.05);
+}
+
+.selectedVmSize::after {
+  content: "✓";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  background-color: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.vmSizeName {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--foreground);
+}
+
+.vmSizeSpecs {
+  font-size: 0.875rem;
+  color: var(--secondary);
+  margin-bottom: 0.75rem;
+}
+
+.vmSizePrice {
+  font-weight: 600;
+  color: var(--primary);
   font-size: 0.875rem;
 }
 
-/* Shape selection in modal */
-.shapeSelector {
-  margin-bottom: 1.25rem;
-}
-
-.shapesContainer {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+.vmTypeSelector {
+  display: flex;
   gap: 1rem;
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 0.5rem;
-  border: 1px solid var(--light-gray);
-  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.shapeOption {
-  padding: 0.75rem;
+.vmTypeButton {
+  padding: 0.5rem 1rem;
   border: 1px solid var(--light-gray);
-  border-radius: var(--border-radius);
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--secondary);
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-size: 0.875rem;
 }
 
-.shapeOption:hover {
-  background-color: var(--light-gray);
+.vmTypeButton:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.activeVmType {
+  border-color: var(--primary);
+  background-color: rgba(0, 102, 255, 0.05);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* OS Selection */
+.osOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.osOption {
+  border: 1px solid var(--light-gray);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.osOption:hover {
+  border-color: var(--primary);
   transform: translateY(-2px);
 }
 
-.shapeOptionHeader {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  align-items: center;
+.selectedOs {
+  border-color: var(--primary);
+  background-color: rgba(0, 102, 255, 0.05);
 }
 
-.shapeOptionName {
+.osIcon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.osName {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Summary section */
+.summarySection {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.summaryTitle {
   font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--foreground);
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.summaryItem:last-child {
+  border-bottom: none;
+}
+
+.summaryLabel {
+  color: var(--secondary);
   font-size: 0.875rem;
 }
 
-.shapeOptionType {
-  font-size: 0.7rem;
-  padding: 0.15rem 0.4rem;
-  border-radius: 20px;
-  background-color: var(--light-gray);
-  text-transform: capitalize;
+.summaryValue {
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
-.shapeOptionSpecs {
+.summaryTotal {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Drawer backdrop */
+.drawerBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+  will-change: opacity;
+}
+
+.drawerBackdropVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Drawer styles - improved for smoother animation and Google-like appearance */
+@keyframes slideIn {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--background);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  height: 90vh; /* Fixed height for consistent scrolling */
+  display: flex;
+  flex-direction: column;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  transform: translateY(100%); /* Initial state for animation */
+  will-change: transform;
+}
+
+.drawerOpen {
+  animation: slideIn 0.35s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+}
+
+.drawerContainer {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.drawerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: var(--background);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex-shrink: 0;
+}
+
+.drawerTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--foreground);
+}
+
+.drawerCloseButton {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: var(--secondary);
+  transition: all 0.2s ease;
+}
+
+.drawerCloseButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--foreground);
+}
+
+.drawerContent {
+  padding: 1.5rem;
+  overflow-y: auto; /* Enable scrolling for content */
+  flex-grow: 1; /* Allow content to take available space */
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+  
+  /* Modern scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 102, 255, 0.5) rgba(0, 0, 0, 0.05);
+}
+
+/* Webkit scrollbar styling (Chrome, Safari, Edge) */
+.drawerContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.drawerContent::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.drawerContent::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 102, 255, 0.3);
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.drawerContent::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 102, 255, 0.6);
+}
+
+.drawerFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: var(--background);
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  flex-shrink: 0;
+}
+
+.stepIndicator {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  position: relative;
+  padding: 0 1rem;
+}
+
+.stepIndicator::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: rgba(0, 0, 0, 0.1);
+  z-index: 0;
+}
+
+.stepItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1;
+  position: relative;
+  width: 120px;
+}
+
+.stepNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.1);
+  color: var(--secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.stepLabel {
+  font-size: 0.875rem;
+  color: var(--secondary);
+  text-align: center;
+  font-weight: 500;
+}
+
+.stepActive .stepNumber {
+  background-color: var(--primary);
+  color: white;
+}
+
+.stepActive .stepLabel {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.stepTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--foreground);
+}
+
+/* Form elements for VM creation - improved for better selection */
+.imageOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.imageOption {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.imageOption:hover {
+  border-color: var(--primary);
+  background-color: rgba(0, 102, 255, 0.02);
+}
+
+.selectedImage {
+  border-color: var(--primary);
+  background-color: rgba(0, 102, 255, 0.05);
+}
+
+.selectedImage::after {
+  content: "✓";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  background-color: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.imageIcon {
+  font-size: 2rem;
+}
+
+.imageText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.recommendedTag {
+  font-size: 0.75rem;
+  color: var(--success);
+  font-weight: 500;
+}
+
+.configOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.configOption {
+  padding: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.configOption:hover {
+  border-color: var(--primary);
+  background-color: rgba(0, 102, 255, 0.02);
+}
+
+.selectedConfig {
+  border-color: var(--primary);
+  background-color: rgba(0, 102, 255, 0.05);
+}
+
+.selectedConfig::after {
+  content: "✓";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  background-color: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.minutesTag {
+  font-size: 0.75rem;
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.helperText {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  margin-top: 0.5rem;
+}
+
+/* Radio and checkbox inputs - improved for better selection */
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.radioLabel:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.checkboxLabel:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.portsSelection {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.portOption {
+  margin-bottom: 0.5rem;
+}
+
+.portRecommended {
+  margin-left: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--success);
+}
+
+.securityWarning {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--warning);
+}
+
+/* Network interface styling */
+.networkSelectGroup {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.createNewButton, .manageButton {
+  padding: 0.5rem 0.75rem;
+  background-color: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.createNewButton:hover, .manageButton:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-color: var(--secondary);
+}
+
+.optionWithDescription {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.optionTitle {
+  font-weight: 500;
+}
+
+.optionDescription {
   font-size: 0.75rem;
   color: var(--secondary);
 }
 
-.selectedShape {
-  margin-bottom: 1.25rem;
-  padding: 1rem;
-  border: 1px solid var(--primary);
-  border-radius: var(--border-radius);
-  background-color: rgba(59, 130, 246, 0.05);
+.loadBalancingOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 0.75rem;
 }
 
-.selectedShapeHeader {
+/* Disk management */
+.osDiskInfo {
+  padding: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.sectionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
 }
 
-.changeShapeButton {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+.addButton {
+  padding: 0.5rem 0.75rem;
   background-color: transparent;
-  border: 1px solid var(--primary);
-  color: var(--primary);
-  border-radius: var(--border-radius);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.changeShapeButton:hover {
+.addButton:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-color: var(--primary);
+}
+
+.noDisks {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--secondary);
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.disksList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.diskItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.diskDetails {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.diskNameInput {
+  padding: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  width: 150px;
+}
+
+.diskSizeInput {
+  padding: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  width: 80px;
+  margin-right: 0.5rem;
+}
+
+.diskActions button {
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.diskActions button:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Review section */
+.reviewSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.reviewSection h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.reviewItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+}
+
+.reviewLabel {
+  font-weight: 500;
+}
+
+.reviewValue {
+  color: var(--secondary);
+}
+
+.reviewSubItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  margin-left: 1rem;
+  color: var(--secondary);
+}
+
+/* Buttons in drawer footer - improved for Google-like appearance */
+.nextButton, .createButton {
+  padding: 0.75rem 1.5rem;
   background-color: var(--primary);
   color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.selectedShapeName {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
+.nextButton:hover, .createButton:hover {
+  background-color: var(--primary-dark);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.selectedShapeSpecs {
-  font-size: 0.875rem;
-  color: var(--secondary);
-  margin-bottom: 0.5rem;
-}
-
-.selectedShapePrice {
-  font-size: 1rem;
-  font-weight: 700;
+.backButton {
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
   color: var(--primary);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-color: var(--primary);
 }
 
 @media (max-width: 768px) {
@@ -501,37 +1375,255 @@
     gap: 1.25rem;
   }
 
-  .shapesContainer {
+  .vmSizeGrid {
     grid-template-columns: 1fr;
+  }
+
+  .osOptions {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .tabs {
     flex-wrap: wrap;
   }
+
+  .wizardHeader {
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+
+  .modalHeader, .modalContent {
+    padding: 1.25rem;
+  }
+  
+  .stepIndicator {
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+  
+  .imageOptions, .configOptions {
+    grid-template-columns: 1fr;
+  }
+  
+  .networkSelectGroup {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .drawerFooter {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .stepItem {
+    width: 80px;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   .input,
-  .select,
-  .shapesContainer,
-  .shapeOption {
+  .select {
     background-color: rgba(255, 255, 255, 0.05);
     border-color: var(--dark-gray);
   }
 
-  .shapeOption:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+  .vmSizeCard,
+  .osOption {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-color: var(--dark-gray);
   }
 
-  .selectedShape {
+  .vmSizeCard:hover,
+  .osOption:hover {
+    border-color: var(--primary);
     background-color: rgba(59, 130, 246, 0.1);
   }
 
-  .shapeOptionType {
-    background-color: rgba(255, 255, 255, 0.1);
+  .selectedVmSize,
+  .selectedOs {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-color: var(--primary);
   }
 
-  .shapeType {
-    background-color: rgba(255, 255, 255, 0.1);
+  .vmTypeButton {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-color: var(--dark-gray);
   }
-} 
+
+  .activeVmType {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-color: var(--primary);
+  }
+
+  .summarySection {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+  
+  .drawer {
+    background-color: var(--background);
+    border-top: 1px solid var(--dark-gray);
+  }
+  
+  .imageOption, .configOption, .diskItem, .portsSelection, .osDiskInfo {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-color: var(--dark-gray);
+  }
+  
+  .diskNameInput, .diskSizeInput {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--dark-gray);
+    color: var(--foreground);
+  }
+  
+  .noDisks {
+    border-color: var(--dark-gray);
+  }
+}
+
+/* Resource usage display */
+.resourceUsage {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-left: 3px solid var(--primary);
+}
+
+.resourceUsageTitle {
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--secondary);
+}
+
+.resourceUsageItem {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+
+.resourceUsageItem span:first-child {
+  font-weight: 500;
+  color: var(--secondary);
+}
+
+.resourceUsageItem span:last-child {
+  font-weight: 600;
+}
+
+/* VM Configuration styles */
+.configOptionsWrapper {
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.configOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.configOption {
+  padding: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.configOption:hover:not(.disabledConfig) {
+  border-color: var(--primary);
+  background-color: rgba(0, 102, 255, 0.02);
+  transform: translateY(-2px);
+}
+
+.selectedConfig {
+  border-color: var(--primary);
+  background-color: rgba(0, 102, 255, 0.05);
+}
+
+.selectedConfig::after {
+  content: "✓";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  background-color: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.disabledConfig {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.configHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.configName {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.configDescription {
+  font-size: 0.85rem;
+  color: var(--secondary);
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.configDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.instancesAvailable {
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.instancesLeft {
+  color: var(--success);
+  font-weight: 500;
+}
+
+.noInstancesLeft {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.minutesTag {
+  font-size: 0.75rem;
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.tierLimitInfo {
+  font-size: 0.85rem;
+  color: var(--secondary);
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary);
+}

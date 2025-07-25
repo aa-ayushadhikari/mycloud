@@ -742,3 +742,32 @@
   }
 } 
 
+/* View all link */
+.viewAllContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.viewAllLink {
+  color: var(--primary);
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.viewAllLink:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* Subsection title */
+.subsectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 2rem 0 1rem;
+  color: var(--foreground);
+} 
+

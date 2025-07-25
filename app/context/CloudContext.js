@@ -45,8 +45,15 @@ export const CloudProvider = ({ children }) => {
     const storedVMs = localStorage.getItem(`mycloud_vms_${userId}`);
     const storedStorages = localStorage.getItem(`mycloud_storages_${userId}`);
     const storedNetworks = localStorage.getItem(`mycloud_networks_${userId}`);
+    const storedResources = localStorage.getItem(`mycloud_resources_${userId}`);
     
-    if (storedVMs) setVirtualMachines(JSON.parse(storedVMs));
+    // Load stored VMs and calculate resource usage from them
+    let vms = [];
+    if (storedVMs) {
+      vms = JSON.parse(storedVMs);
+      setVirtualMachines(vms);
+    }
+    
     if (storedStorages) setStorages(JSON.parse(storedStorages));
     if (storedNetworks) setNetworks(JSON.parse(storedNetworks));
 
@@ -100,74 +107,57 @@ export const CloudProvider = ({ children }) => {
              subscriptionTiers.find(tier => tier.id === 'free'))
           : null;
         
-                  if (userTier) {
-            // Update resources based on subscription
-            const storedResources = localStorage.getItem(`mycloud_resources_${userId}`);
-            
-            // Extract resource values safely with defaults
-            const cpuTotal = userTier.features?.compute?.vCPU || 
-                            userTier.resources?.compute?.vCpuCores || 
-                            userTier.resources?.cpu?.total || 1;
-                            
-            const memoryTotal = userTier.features?.compute?.ram || 
-                               userTier.resources?.compute?.ramGB || 
-                               userTier.resources?.memory?.total || 0.5;
-                               
-            const storageTotal = userTier.features?.storage?.total || 
-                                userTier.resources?.storage?.totalGB || 
-                                userTier.resources?.storage?.total || 50;
-            
-            let resourcesData = {
-              cpu: { 
-                total: cpuTotal,
-                used: 0 
-              },
-              memory: { 
-                total: memoryTotal,
-                used: 0 
-              },
-              storage: { 
-                total: storageTotal,
-                used: 0 
-              }
-            };
-            
-            // Check if API returned quota usage data
-            if (userSubscription.quotaUsage) {
-              // Use API data for resource usage
-              resourcesData = {
-                cpu: { 
-                  total: userTier.features?.compute?.vCPU || cpuTotal,
-                  used: userSubscription.quotaUsage.compute?.vCpuCores?.used || 0
-                },
-                memory: { 
-                  total: userTier.features?.compute?.ram || memoryTotal,
-                  used: userSubscription.quotaUsage.compute?.ramGB?.used || 0
-                },
-                storage: { 
-                  total: userTier.features?.storage?.total || storageTotal,
-                  used: userSubscription.quotaUsage.storage?.totalGB?.used || 0
-                }
-              };
-            } else if (storedResources) {
-              // Fall back to stored resources if API doesn't provide quota data
-              const parsedResources = JSON.parse(storedResources);
-              resourcesData = {
-                cpu: { 
-                  total: userTier.features?.compute?.vCPU || cpuTotal,
-                  used: Math.min(parsedResources.cpu.used, userTier.features?.compute?.vCPU || cpuTotal)
-                },
-                memory: { 
-                  total: userTier.features?.compute?.ram || memoryTotal,
-                  used: Math.min(parsedResources.memory.used, userTier.features?.compute?.ram || memoryTotal)
-                },
-                storage: { 
-                  total: userTier.features?.storage?.total || storageTotal,
-                  used: Math.min(parsedResources.storage.used, userTier.features?.storage?.total || storageTotal)
-                }
-              };
-            }
+        if (userTier) {
+          // Extract resource values safely with defaults
+          const cpuTotal = userTier.features?.compute?.vCPU || 
+                          userTier.resources?.compute?.vCpuCores || 
+                          userTier.resources?.cpu?.total || 1;
+                          
+          const memoryTotal = userTier.features?.compute?.ram || 
+                             userTier.resources?.compute?.ramGB || 
+                             userTier.resources?.memory?.total || 0.5;
+                             
+          const storageTotal = userTier.features?.storage?.total || 
+                              userTier.resources?.storage?.totalGB || 
+                              userTier.resources?.storage?.total || 50;
           
+          // Calculate actual usage from VMs
+          const calculateUsedResources = () => {
+            let cpuUsed = 0;
+            let memoryUsed = 0;
+            
+            // Sum up resources from all running VMs
+            vms.forEach(vm => {
+              if (vm.status !== 'terminated') {
+                cpuUsed += vm.cpu || 0;
+                memoryUsed += vm.memory || 0;
+              }
+            });
+            
+            return {
+              cpu: cpuUsed,
+              memory: memoryUsed
+            };
+          };
+          
+          const calculatedUsage = calculateUsedResources();
+          
+          let resourcesData = {
+            cpu: { 
+              total: cpuTotal,
+              used: calculatedUsage.cpu
+            },
+            memory: { 
+              total: memoryTotal,
+              used: calculatedUsage.memory
+            },
+            storage: { 
+              total: storageTotal,
+              used: 0 // We'll calculate this separately if needed
+            }
+          };
+          
+          console.log("Setting resource data with calculated usage:", resourcesData);
           setResources(resourcesData);
         }
       } catch (error) {
