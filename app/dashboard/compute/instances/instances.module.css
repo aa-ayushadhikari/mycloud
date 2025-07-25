@@ -1627,3 +1627,519 @@
   border-radius: 6px;
   border-left: 3px solid var(--primary);
 }
+
+/* VM Details Page Styles */
+.vmDetailHeader {
+  margin-bottom: 2rem;
+  align-items: flex-start;
+}
+
+.vmTitleContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.vmDetailTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.vmActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.actionButtonLarge {
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.startButton {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.startButton:hover {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+.stopButton {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.stopButton:hover {
+  background-color: rgba(245, 158, 11, 0.2);
+}
+
+.restartButton {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+}
+
+.restartButton:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+.deleteButtonLarge {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.deleteButtonLarge:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.vmDetailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.vmDetailSection {
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--box-shadow);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sectionIcon {
+  font-size: 1.125rem;
+}
+
+.detailsTable {
+  display: flex;
+  flex-direction: column;
+}
+
+.detailRow {
+  display: flex;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.detailRow:last-child {
+  border-bottom: none;
+}
+
+.detailLabel {
+  flex: 1;
+  color: var(--secondary);
+  font-size: 0.875rem;
+}
+
+.detailValue {
+  flex: 2;
+  font-weight: 500;
+}
+
+.networkLink {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.networkLink:hover {
+  text-decoration: underline;
+}
+
+.addTagsLink {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.addTagsLink:hover {
+  text-decoration: underline;
+}
+
+.monitoringSection {
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 2rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.monitoringPlaceholder {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: var(--border-radius);
+  border: 1px dashed var(--light-gray);
+}
+
+.monitoringMessage {
+  color: var(--secondary);
+  font-size: 0.9375rem;
+}
+
+/* Monitoring grid and charts */
+.monitoringGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.monitoringCard {
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  padding: 1.25rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.monitoringCard h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.monitoringChart {
+  height: 180px;
+  margin-bottom: 1rem;
+}
+
+.chartPlaceholder {
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary);
+  font-size: 0.875rem;
+}
+
+.monitoringStats {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--light-gray);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.statItem span:first-child {
+  font-size: 0.75rem;
+  color: var(--secondary);
+}
+
+.statItem span:last-child {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Activity logs styles */
+.logsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.logItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.logTime {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  white-space: nowrap;
+}
+
+.logType {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.logInfo {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+}
+
+.logWarning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.logError {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.logMessage {
+  font-size: 0.875rem;
+}
+
+/* Tags styles */
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 20px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+/* Error notification */
+.errorNotification {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid var(--danger);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+}
+
+.errorNotification p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--danger);
+}
+
+/* API Error Display */
+.apiErrorContainer {
+  background-color: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.apiErrorContainer h4 {
+  color: var(--danger);
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.apiErrorList {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.apiErrorItem {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+@media (max-width: 992px) {
+  .vmDetailsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .vmDetailHeader {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .vmActions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .actionButtonLarge {
+    flex: 1;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .vmDetailSection, .monitoringSection {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .monitoringPlaceholder {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-color: var(--dark-gray);
+  }
+
+  .detailRow {
+    border-color: var(--dark-gray);
+  }
+}
+
+/* Disk and storage management section */
+.diskSection {
+  margin-top: 2rem;
+}
+
+.diskList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.diskItem {
+  background-color: var(--background);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  border: 1px solid var(--light-gray);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.diskName {
+  font-weight: 500;
+}
+
+.diskSize {
+  color: var(--secondary);
+  font-size: 0.875rem;
+}
+
+/* Tab navigation for VM detail page */
+.vmDetailTabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--light-gray);
+  overflow-x: auto;
+}
+
+.vmDetailTab {
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--secondary);
+  position: relative;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.vmDetailTab:hover {
+  color: var(--primary);
+}
+
+.vmDetailTabActive {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.vmDetailTabActive::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 2px;
+  background-color: var(--primary);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .chartPlaceholder {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .tag {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .errorNotification {
+    background-color: rgba(239, 68, 68, 0.15);
+  }
+}
+
+/* Placeholder field when API resources aren't available */
+.placeholderField {
+  padding: 0.75rem 1rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--border-radius);
+  color: var(--secondary);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Info message */
+.infoMessage {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(59, 130, 246, 0.05);
+  border-left: 3px solid var(--primary);
+  border-radius: 4px;
+}
+
+.infoMessage p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--primary);
+}
+
+/* Filter Controls */
+.filterControls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.filterButton {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary);
+  border-radius: 20px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.filterButton.activeFilter {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.filterButton:hover:not(.activeFilter) {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--foreground);
+}

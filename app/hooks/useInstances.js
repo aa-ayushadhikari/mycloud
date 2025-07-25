@@ -96,4 +96,32 @@ export function useInstances(page = 1, limit = 10, filters = {}) {
     stopInstance, 
     terminateInstance 
   };
+}
+
+// Add a new hook to fetch all instances from the API
+export function useAllInstances(filters = {}) {
+  const [instances, setInstances] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchInstances = async () => {
+    try {
+      setLoading(true);
+      const response = await instanceService.getAllInstances(1, 100, filters); // Using a high limit to get all
+      setInstances(response.instances || []);
+      setError(null);
+      return response.instances || [];
+    } catch (err) {
+      setError(err.message || 'Failed to fetch instances');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInstances();
+  }, [JSON.stringify(filters)]);
+
+  return { instances, loading, error, refetchInstances: fetchInstances };
 } 

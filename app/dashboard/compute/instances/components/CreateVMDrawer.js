@@ -3,11 +3,39 @@ import { useCloud } from '../../../../context/CloudContext';
 import styles from '../instances.module.css';
 import { useAuth } from '../../../../hooks/useAuth';
 import { subscriptionService } from '../../../../services/subscriptionService';
+import { instanceService } from '../../../../services/instanceService';
+
+// Add this component to display API errors in a more structured way
+const ApiErrorDisplay = ({ errors }) => {
+  if (!errors || errors.length === 0) return null;
+  
+  return (
+    <div className={styles.apiErrorContainer}>
+      <h4>Please fix the following errors:</h4>
+      <ul className={styles.apiErrorList}>
+        {errors.map((error, index) => (
+          <li key={index} className={styles.apiErrorItem}>
+            {error.message || error.msg || JSON.stringify(error)}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 const CreateVMDrawer = ({ isOpen, onClose }) => {
-  const { createVirtualMachine, resources, virtualMachines } = useCloud();
+  const { resources } = useCloud(); // Only use resources from context
   const { user } = useAuth();
   const drawerRef = useRef(null);
+  
+  // State for API data
+  const [vmConfigurations, setVmConfigurations] = useState([]);
+  const [operatingSystems, setOperatingSystems] = useState([]);
+  const [virtualNetworks, setVirtualNetworks] = useState([]);
+  const [subnets, setSubnets] = useState([]);
+  const [publicIps, setPublicIps] = useState([]);
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
+  const [apiLoading, setApiLoading] = useState(true);
   
   // State to track subscription tier
   const [subscriptionTier, setSubscriptionTier] = useState('free');
@@ -37,71 +65,137 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
     getUserSubscription();
   }, [user]);
   
-  console.log('User object directly from useAuth():', user);
-  
-  if (user) {
-    console.log('User subscription from useAuth:', user.subscription);
-    if (user.subscription) {
-      console.log('User subscription tier:', user.subscription.tier);
-    }
-  }
-  
   const [currentStep, setCurrentStep] = useState(1);
   const [error, setError] = useState('');
   const [isClosing, setIsClosing] = useState(false);
-  const [remainingMinutes, setRemainingMinutes] = useState(60); // For free tier
+  const [creating, setCreating] = useState(false);
+  const [apiErrors, setApiErrors] = useState([]);
   
-  console.log('Current subscription tier state:', subscriptionTier);
-
   // VM configuration form data
   const [formData, setFormData] = useState({
     name: '',
-    type: 'General Purpose',
-    image: 'windows-10-pro',
-    cpu: 1,
-    memory: 0.5,
-    username: '',
-    password: '',
-    confirmPassword: '',
-    inboundPorts: ['3389'], // Default to allow RDP port
-    osDisks: [{ name: 'OS Disk', size: 128 }],
-    additionalDisks: [],
-    networkInterface: {
-      virtualNetwork: 'AyushAdhikari-vnet',
-      subnet: 'default (10.0.0.0/24)',
-      publicIp: true,
-      publicIpName: `ip-${Math.random().toString(36).substring(2, 8)}`,
-      securityGroup: 'Basic',
-      deleteWithVM: true,
-      acceleratedNetworking: false,
+    configId: '',
+    region: '',
+    zone: '',
+    os: {
+      name: '',
+      version: ''
     },
-    loadBalancing: 'None'
+    adminAccount: {
+      username: 'adminuser',
+      password: '',
+      confirmPassword: '',
+      rdpEnabled: false
+    },
+    networking: {
+      virtualNetworkId: '',
+      subnetId: '',
+      publicIp: true,
+      deletePublicIpWithVm: true,
+      deleteNicWithVm: true
+    },
+    additionalDisks: []
   });
   
-  // VM configurations based on subscription
-  const vmConfigurations = {
-    free: [
-      { cpu: 1, memory: 0.5, label: '1vCPU, 0.5GB RAM', maxInstances: 1, description: 'Limited to 60 minutes' }
-    ],
-    startup: [
-      { cpu: 1, memory: 0.5, label: '1vCPU, 0.5GB RAM', maxInstances: 2, description: 'Ideal for small workloads' },
-      { cpu: 2, memory: 1, label: '2vCPU, 1GB RAM', maxInstances: 1, description: 'Good for development environments' }
-    ],
-    basic: [
-      { cpu: 1, memory: 0.5, label: '1vCPU, 0.5GB RAM', maxInstances: 6, description: 'Ideal for small workloads' },
-      { cpu: 2, memory: 1, label: '2vCPU, 1GB RAM', maxInstances: 3, description: 'Good for development environments' }
-    ],
-    gold: [
-      { cpu: 1, memory: 0.5, label: '1vCPU, 0.5GB RAM', maxInstances: 8, description: 'Ideal for small workloads' },
-      { cpu: 2, memory: 1, label: '2vCPU, 1GB RAM', maxInstances: 4, description: 'Good for development environments' },
-      { cpu: 8, memory: 16, label: '8vCPU, 16GB RAM', maxInstances: 1, description: 'High performance computing' }
-    ]
-  };
+  // Fetch VM configurations and resources from API when drawer opens
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const fetchConfigData = async () => {
+      setApiLoading(true);
+      setError('');
+      setApiErrors([]);
+      
+      try {
+        // Fetch VM configurations - this is the primary API we need
+        try {
+          const configResponse = await instanceService.getVmConfigurations();
+          console.log('VM Configurations:', configResponse);
+          
+          if (configResponse.success && configResponse.configurations) {
+            setVmConfigurations(configResponse.configurations);
+            setOperatingSystems(configResponse.operatingSystems || []);
+            setSubscriptionInfo(configResponse.subscription);
+            
+            // Set default configuration if available
+            if (configResponse.configurations.length > 0) {
+              const defaultConfig = configResponse.configurations[0];
+              
+              setFormData(prevData => ({
+                ...prevData,
+                configId: defaultConfig.id,
+                region: defaultConfig.region?.name || '',
+                zone: defaultConfig.region?.zones?.[0] || '',
+                os: {
+                  name: configResponse.operatingSystems?.[0]?.name || '',
+                  version: configResponse.operatingSystems?.[0]?.version || ''
+                }
+              }));
+            }
+          }
+        } catch (configError) {
+          console.error('Error fetching VM configurations:', configError);
+          setError('Failed to load VM configurations. Please try again later.');
+          // This is critical, so we'll set loading to false and stop here
+          setApiLoading(false);
+          return;
+        }
+        
+        // Fetch virtual networks - this is optional, so we'll handle errors gracefully
+        try {
+          const vnetResponse = await instanceService.getVirtualNetworks();
+          if (vnetResponse.virtualNetworks) {
+            setVirtualNetworks(vnetResponse.virtualNetworks);
+          }
+        } catch (networkError) {
+          console.warn('Could not fetch virtual networks (endpoint might not exist yet):', networkError);
+          // Set empty array but continue
+          setVirtualNetworks([]);
+        }
+        
+        // Fetch public IPs - this is optional, so we'll handle errors gracefully
+        try {
+          const ipResponse = await instanceService.getPublicIps();
+          if (ipResponse.publicIps) {
+            setPublicIps(ipResponse.publicIps);
+          }
+        } catch (ipError) {
+          console.warn('Could not fetch public IPs (endpoint might not exist yet):', ipError);
+          // Set empty array but continue
+          setPublicIps([]);
+        }
+        
+      } catch (err) {
+        console.error('Error fetching VM configuration data:', err);
+        setError('Failed to load VM configurations. Please try again later.');
+      } finally {
+        setApiLoading(false);
+      }
+    };
+    
+    fetchConfigData();
+  }, [isOpen]);
   
-  // Count existing instances by configuration
-  const countInstancesByConfig = (cpu, memory) => {
-    return virtualMachines.filter(vm => vm.cpu === cpu && vm.memory === memory).length;
-  };
+  // Fetch subnets when virtual network is selected
+  useEffect(() => {
+    if (!formData.networking.virtualNetworkId) {
+      setSubnets([]);
+      return;
+    }
+    
+    const fetchSubnets = async () => {
+      try {
+        const response = await instanceService.getSubnets(formData.networking.virtualNetworkId);
+        if (response.subnets) {
+          setSubnets(response.subnets);
+        }
+      } catch (error) {
+        console.error('Error fetching subnets:', error);
+      }
+    };
+    
+    fetchSubnets();
+  }, [formData.networking.virtualNetworkId]);
   
   // Reset form when drawer opens and handle animation
   useEffect(() => {
@@ -110,42 +204,30 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
       setCurrentStep(1);
       setError('');
       
-      // Get default configuration for user's tier
-      let defaultConfig = { cpu: 1, memory: 0.5 }; // Default for free tier
-      
-      // Select an appropriate default configuration based on subscription
-      if (subscriptionTier === 'gold') {
-        defaultConfig = { cpu: 2, memory: 1 }; // Mid-range option for Gold
-      } else if (subscriptionTier === 'basic') {
-        defaultConfig = { cpu: 2, memory: 1 }; // Higher option for Basic
-      } else if (subscriptionTier === 'startup') {
-        defaultConfig = { cpu: 1, memory: 0.5 }; // Lower option for Startup
-      }
-      
-      console.log('Setting default config based on tier:', subscriptionTier, defaultConfig);
-      
+      // Reset form to initial values
       setFormData({
         name: '',
-        type: 'General Purpose',
-        image: 'windows-10-pro',
-        cpu: defaultConfig.cpu,
-        memory: defaultConfig.memory,
-        username: '',
-        password: '',
-        confirmPassword: '',
-        inboundPorts: ['3389'], // Default to allow RDP port
-        osDisks: [{ name: 'OS Disk', size: 128 }],
-        additionalDisks: [],
-        networkInterface: {
-          virtualNetwork: 'AyushAdhikari-vnet',
-          subnet: 'default (10.0.0.0/24)',
-          publicIp: true,
-          publicIpName: `ip-${Math.random().toString(36).substring(2, 8)}`,
-          securityGroup: 'Basic',
-          deleteWithVM: true,
-          acceleratedNetworking: false,
+        configId: '',
+        region: '',
+        zone: '',
+        os: {
+          name: '',
+          version: ''
         },
-        loadBalancing: 'None'
+        adminAccount: {
+          username: 'adminuser',
+          password: '',
+          confirmPassword: '',
+          rdpEnabled: false
+        },
+        networking: {
+          virtualNetworkId: '',
+          subnetId: '',
+          publicIp: true,
+          deletePublicIpWithVm: true,
+          deleteNicWithVm: true
+        },
+        additionalDisks: []
       });
       
       // Prevent body scrolling when drawer is open
@@ -159,7 +241,7 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen, subscriptionTier]);
+  }, [isOpen]);
   
   // Handle closing with animation
   const handleCloseDrawer = () => {
@@ -179,11 +261,12 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
     }
   };
   
+  // Handle input changes for form fields
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     
     if (name.includes('.')) {
-      // Handle nested properties (e.g., networkInterface.virtualNetwork)
+      // Handle nested properties (e.g., adminAccount.username)
       const [parent, child] = name.split('.');
       setFormData({
         ...formData,
@@ -202,27 +285,35 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
   };
   
   // Handle VM configuration selection
-  const handleConfigSelection = (config) => {
+  const handleConfigSelection = (configId) => {
+    const selectedConfig = vmConfigurations.find(config => config.id === configId);
+    if (!selectedConfig) return;
+    
     setFormData({
       ...formData,
-      cpu: config.cpu,
-      memory: config.memory
+      configId,
+      region: selectedConfig.region?.name || '',
+      zone: selectedConfig.region?.zones?.[0] || ''
     });
   };
   
-  // Handle inbound ports selection
-  const handlePortSelection = (port) => {
-    if (formData.inboundPorts.includes(port)) {
-      setFormData({
-        ...formData,
-        inboundPorts: formData.inboundPorts.filter(p => p !== port)
-      });
-    } else {
-      setFormData({
-        ...formData,
-        inboundPorts: [...formData.inboundPorts, port]
-      });
-    }
+  // Handle OS selection
+  const handleOsSelection = (osId) => {
+    const selectedOs = operatingSystems.find(os => os.id === osId);
+    if (!selectedOs) return;
+    
+    setFormData({
+      ...formData,
+      os: {
+        name: selectedOs.name,
+        version: selectedOs.version
+      },
+      // Reset RDP option based on OS
+      adminAccount: {
+        ...formData.adminAccount,
+        rdpEnabled: selectedOs.name === 'Windows'
+      }
+    });
   };
   
   // Add additional disk
@@ -231,7 +322,7 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
       ...formData,
       additionalDisks: [
         ...formData.additionalDisks,
-        { name: `Disk-${formData.additionalDisks.length + 1}`, size: 128 }
+        { name: `data-disk-${formData.additionalDisks.length + 1}`, sizeGB: 100, storageType: 'Standard_LRS' }
       ]
     });
   };
@@ -267,17 +358,22 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
         return;
       }
       
-      if (!formData.username.trim()) {
+      if (!formData.configId) {
+        setError('Please select a VM configuration');
+        return;
+      }
+      
+      if (!formData.os.name) {
+        setError('Please select an operating system');
+        return;
+      }
+      
+      if (!formData.adminAccount.username.trim()) {
         setError('Administrator username is required');
         return;
       }
       
-      if (!formData.password.trim()) {
-        setError('Administrator password is required');
-        return;
-      }
-      
-      if (formData.password !== formData.confirmPassword) {
+      if (formData.adminAccount.password && formData.adminAccount.password !== formData.adminAccount.confirmPassword) {
         setError('Passwords do not match');
         return;
       }
@@ -292,133 +388,189 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
     setCurrentStep(prev => prev - 1);
   };
   
+  // Add a password helper function to ensure it matches the required format
+  const ensureValidPassword = (password) => {
+    // Check if password already contains all required elements
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    if (hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar) {
+      return password; // Password meets all requirements
+    }
+    
+    // For fixing password validation issue when it doesn't match required format
+    let updatedPassword = password;
+    
+    // Add missing requirements if needed
+    if (!hasUpperCase) updatedPassword += 'A';
+    if (!hasLowerCase) updatedPassword += 'a';
+    if (!hasNumber) updatedPassword += '1';
+    if (!hasSpecialChar) updatedPassword += '!';
+    
+    return updatedPassword;
+  };
+
   // Handle VM creation
-  const handleCreateVM = () => {
+  const handleCreateVM = async () => {
     // Final validation
     if (!formData.name.trim()) {
       setError('VM Name is required');
       return;
     }
     
-    // Get current resource usage
-    const currentCpuUsage = virtualMachines.reduce((total, vm) => total + vm.cpu, 0);
-    const currentMemoryUsage = virtualMachines.reduce((total, vm) => total + vm.memory, 0);
-    
-    // Get tier resource limits
-    const tierLimits = {
-      free: { maxCpu: 1, maxMemory: 0.5, maxInstances: 1 },
-      startup: { maxCpu: 2, maxMemory: 1, maxInstances: 2 },
-      basic: { maxCpu: 6, maxMemory: 3, maxInstances: 6 },
-      gold: { maxCpu: 8, maxMemory: 16, maxInstances: 8 }
-    };
-    
-    const limits = tierLimits[subscriptionTier] || tierLimits.free;
-    
-    // Special handling for startup tier
-    if (subscriptionTier === 'startup') {
-      // If trying to create a 2vCPU VM, ensure no other VMs exist
-      if (formData.cpu === 2 && formData.memory === 1 && virtualMachines.length > 0) {
-        setError('Startup tier can only have 1 instance of 2vCPU/1GB RAM with no other instances');
-        return;
-      }
-      
-      // If trying to create a 1vCPU VM but a 2vCPU VM already exists
-      if (formData.cpu === 1 && formData.memory === 0.5 && virtualMachines.some(vm => vm.cpu === 2)) {
-        setError('Startup tier cannot mix 2vCPU and 1vCPU instances');
-        return;
-      }
-      
-      // If already have 2 instances of 1vCPU
-      if (formData.cpu === 1 && formData.memory === 0.5 && 
-          virtualMachines.filter(vm => vm.cpu === 1 && vm.memory === 0.5).length >= 2) {
-        setError('Startup tier is limited to maximum 2 instances of 1vCPU/0.5GB RAM');
-        return;
-      }
-    }
-    
-    // Basic tier special handling
-    if (subscriptionTier === 'basic') {
-      // If trying to create a combination that exceeds the total resources
-      const newTotalCpu = currentCpuUsage + formData.cpu;
-      const newTotalMemory = currentMemoryUsage + formData.memory;
-      
-      if (newTotalCpu > limits.maxCpu) {
-        setError(`Basic tier is limited to ${limits.maxCpu} total vCPUs (${limits.maxCpu - currentCpuUsage} remaining)`);
-        return;
-      }
-      
-      if (newTotalMemory > limits.maxMemory) {
-        setError(`Basic tier is limited to ${limits.maxMemory}GB total RAM (${limits.maxMemory - currentMemoryUsage}GB remaining)`);
-        return;
-      }
-    }
-    
-    // Gold tier special handling
-    if (subscriptionTier === 'gold') {
-      // If trying to create a combination that exceeds the total resources
-      const newTotalCpu = currentCpuUsage + formData.cpu;
-      const newTotalMemory = currentMemoryUsage + formData.memory;
-      
-      if (newTotalCpu > limits.maxCpu) {
-        setError(`Gold tier is limited to ${limits.maxCpu} total vCPUs (${limits.maxCpu - currentCpuUsage} remaining)`);
-        return;
-      }
-      
-      if (newTotalMemory > limits.maxMemory) {
-        setError(`Gold tier is limited to ${limits.maxMemory}GB total RAM (${limits.maxMemory - currentMemoryUsage}GB remaining)`);
-        return;
-      }
-      
-      // If trying to create more than one 8vCPU instance
-      if (formData.cpu === 8 && formData.memory === 16 && 
-          virtualMachines.some(vm => vm.cpu === 8 && vm.memory === 16)) {
-        setError('Gold tier can only have 1 instance of 8vCPU/16GB RAM');
-        return;
-      }
-    }
-    
-    // Check if max instance count reached
-    if (virtualMachines.length >= limits.maxInstances) {
-      setError(`You have reached the maximum number of instances (${limits.maxInstances}) allowed for your ${subscriptionTier} subscription`);
+    if (!formData.configId) {
+      setError('Please select a VM configuration');
       return;
     }
     
-    // All validation passed, create the VM
-    createVirtualMachine({
-      name: formData.name,
-      type: 'general',
-      cpu: formData.cpu,
-      memory: formData.memory,
-      disk: formData.osDisks[0].size,
-      os: formData.image,
-      username: formData.username,
-      password: formData.password,
-      inboundPorts: formData.inboundPorts,
-      additionalDisks: formData.additionalDisks,
-      networkInterface: formData.networkInterface
-    });
+    setCreating(true);
+    setError('');
+    setApiErrors([]);
     
-    // Close drawer
-    handleCloseDrawer();
+    try {
+      // Build request body exactly as shown in documentation example
+      const requestBody = {
+        name: formData.name,
+        configId: formData.configId,
+        region: formData.region,
+        zone: formData.zone,
+        os: {
+          name: formData.os.name,
+          version: formData.os.version
+        }
+      };
+
+      // Add administrator account if provided
+      if (formData.adminAccount.username) {
+        requestBody.adminAccount = {
+          username: formData.adminAccount.username
+        };
+        
+        // Only add password if provided, and ensure it meets validation requirements
+        if (formData.adminAccount.password) {
+          // Ensure password meets validation requirements
+          requestBody.adminAccount.password = ensureValidPassword(formData.adminAccount.password);
+        }
+        
+        // Add rdpEnabled only for Windows
+        if (formData.os.name === 'Windows') {
+          requestBody.adminAccount.rdpEnabled = formData.adminAccount.rdpEnabled;
+        }
+      }
+
+      // Add networking - simplify if virtual networks aren't available
+      // Only include networking if we have values to send or publicIp is set
+      if (
+        formData.networking.publicIp || 
+        formData.networking.virtualNetworkId || 
+        virtualNetworks.length === 0 // Include minimal networking if networks aren't available
+      ) {
+        requestBody.networking = {};
+        
+        // Add virtualNetworkId if present and networks are available
+        if (formData.networking.virtualNetworkId && virtualNetworks.length > 0) {
+          requestBody.networking.virtualNetworkId = formData.networking.virtualNetworkId;
+          
+          // Add subnetId only if we have a virtual network and subnet
+          if (formData.networking.subnetId) {
+            requestBody.networking.subnetId = formData.networking.subnetId;
+          }
+        }
+        
+        // Add publicIp flag
+        requestBody.networking.publicIp = formData.networking.publicIp;
+        
+        // Only add these if publicIp is true
+        if (formData.networking.publicIp) {
+          requestBody.networking.deletePublicIpWithVm = formData.networking.deletePublicIpWithVm;
+        }
+        
+        // Always add deleteNicWithVm
+        requestBody.networking.deleteNicWithVm = formData.networking.deleteNicWithVm;
+      }
+
+      // Add additional disks if any, using the exact format from documentation
+      if (formData.additionalDisks.length > 0) {
+        requestBody.additionalDisks = formData.additionalDisks.map(disk => ({
+          name: disk.name,
+          sizeGB: parseInt(disk.sizeGB), // Ensure this is a number not a string
+          storageType: disk.storageType
+        }));
+      }
+      
+      console.log('Creating VM with data:', JSON.stringify(requestBody, null, 2));
+      
+      // Call the API to create the VM
+      const result = await instanceService.createVirtualMachine(requestBody);
+      console.log('VM creation result:', result);
+      
+      // If we reach here, the API call was successful
+      // Close drawer and trigger refresh
+      handleCloseDrawer();
+      
+    } catch (error) {
+      console.error('Error creating VM:', error);
+      
+      // Handle detailed API errors
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error response status:', error.response.status);
+        
+        if (error.response.data) {
+          if (error.response.data.message) {
+            setError(`API Error: ${error.response.data.message}`);
+          } else if (error.response.data.errors && error.response.data.errors.length > 0) {
+            setApiErrors(error.response.data.errors);
+            
+            const errorSummary = error.response.data.errors.length === 1
+              ? error.response.data.errors[0].message || 'Validation error'
+              : `${error.response.data.errors.length} validation errors found`;
+              
+            setError(`API Error: ${errorSummary}`);
+          } else {
+            setError(`API Error: ${JSON.stringify(error.response.data)}`);
+          }
+        } else {
+          setError(`API Error: ${error.response.status} ${error.response.statusText}`);
+        }
+      } else if (error.request) {
+        console.error('Error request:', error.request);
+        setError('No response received from server. Please check your network connection.');
+      } else {
+        setError(error.message || 'Failed to create VM. Please try again later.');
+      }
+    } finally {
+      setCreating(false);
+    }
   };
   
-  // VM image options
-  const imageOptions = [
-    { id: 'ubuntu-22.04', name: 'Ubuntu 22.04 LTS', icon: '🐧' },
-    { id: 'windows-10-pro', name: 'Windows 10 Pro', icon: '🪟', recommended: true },
-    { id: 'windows-11-pro', name: 'Windows 11 Pro', icon: '🪟' },
-    { id: 'linux-generic', name: 'Linux', icon: '🐧' }
-  ];
+  // If drawer is not open and not closing, don't render anything
+  if (!isOpen && !isClosing) return null;
   
-  // Available configurations based on subscription
-  console.log('About to select configurations for tier:', subscriptionTier);
+  // Determine if form is ready based on loaded data
+  const isFormReady = !apiLoading && vmConfigurations.length > 0;
   
-  const availableConfigurations = vmConfigurations[subscriptionTier] || vmConfigurations.free;
-  console.log('Final tier used for configurations:', subscriptionTier);
-  console.log('Available configurations selected:', availableConfigurations);
+  // Check if selected config has any available instances
+  const getSelectedConfig = () => {
+    return vmConfigurations.find(config => config.id === formData.configId);
+  };
+  
+  const selectedConfig = getSelectedConfig();
+  const isConfigAvailable = selectedConfig && selectedConfig.availableInstances > 0;
   
   // Render specific step content based on currentStep
   const renderStepContent = () => {
+    if (apiLoading) {
+      return (
+        <div className={styles.loadingContainer}>
+          <div className={styles.loader}></div>
+          <p>Loading VM configurations...</p>
+        </div>
+      );
+    }
+    
     switch(currentStep) {
       case 1:
         return (
@@ -435,44 +587,12 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                 value={formData.name}
                 onChange={handleInputChange}
                 className={styles.input}
-                placeholder="Enter VM name"
+                placeholder="Enter VM name (alphanumeric and hyphens only)"
+                pattern="[a-zA-Z0-9-]+"
+                minLength={3}
+                maxLength={50}
               />
-            </div>
-            
-            {/* VM Type */}
-            <div className={styles.formGroup}>
-              <label htmlFor="vmType">VM Type</label>
-              <input
-                type="text"
-                id="vmType"
-                name="type"
-                value={formData.type}
-                className={styles.input}
-                disabled
-              />
-              <p className={styles.helperText}>Not changeable</p>
-            </div>
-            
-            {/* VM Image */}
-            <div className={styles.formGroup}>
-              <label>Image</label>
-              <div className={styles.imageOptions}>
-                {imageOptions.map(image => (
-                  <div 
-                    key={image.id} 
-                    className={`${styles.imageOption} ${formData.image === image.id ? styles.selectedImage : ''}`}
-                    onClick={() => setFormData({...formData, image: image.id})}
-                  >
-                    <span className={styles.imageIcon}>{image.icon}</span>
-                    <div className={styles.imageText}>
-                      <span>{image.name}</span>
-                      {image.recommended && subscriptionTier === 'free' && (
-                        <span className={styles.recommendedTag}>Recommended for free users</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p className={styles.helperText}>Only alphanumeric characters and hyphens, 3-50 characters</p>
             </div>
             
             {/* VM Configuration */}
@@ -482,59 +602,48 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                 Select a configuration based on your subscription tier
               </p>
               
-              {/* Show current resource usage */}
+              {/* Show current tier info */}
               <div className={styles.resourceUsage}>
-                <p className={styles.resourceUsageTitle}>Current Usage:</p>
-                <div className={styles.resourceUsageItem}>
-                  <span>CPU:</span>
-                  <span>{virtualMachines.reduce((total, vm) => total + vm.cpu, 0)} / {resources.cpu.total} vCPUs</span>
-                </div>
-                <div className={styles.resourceUsageItem}>
-                  <span>Memory:</span>
-                  <span>{virtualMachines.reduce((total, vm) => total + vm.memory, 0)} / {resources.memory.total} GB RAM</span>
-                </div>
-                <div className={styles.resourceUsageItem}>
-                  <span>Instances:</span>
-                  <span>{virtualMachines.length} / {
-                    subscriptionTier === 'free' ? 1 :
-                    subscriptionTier === 'startup' ? 2 :
-                    subscriptionTier === 'basic' ? 6 :
-                    subscriptionTier === 'gold' ? 8 : 1
-                  }</span>
-                </div>
+                <p className={styles.resourceUsageTitle}>Subscription Tier: {subscriptionInfo?.tier || subscriptionTier}</p>
+                {subscriptionInfo?.timeLimit > 0 && (
+                  <p className={styles.minutesTag}>Time Limit: {subscriptionInfo.timeLimit} minutes</p>
+                )}
               </div>
               
               <div className={styles.configOptionsWrapper}>
                 <div className={styles.configOptions}>
-                  {availableConfigurations.map((config, index) => {
-                    const usedCount = countInstancesByConfig(config.cpu, config.memory);
-                    const isDisabled = usedCount >= config.maxInstances;
-                    const remainingInstances = config.maxInstances - usedCount;
+                  {vmConfigurations.map((config, index) => {
+                    const isDisabled = config.availableInstances <= 0;
+                    const isSelected = formData.configId === config.id;
                     
                     return (
                       <div 
-                        key={index} 
+                        key={config.id} 
                         className={`
                           ${styles.configOption} 
-                          ${formData.cpu === config.cpu && formData.memory === config.memory ? styles.selectedConfig : ''}
+                          ${isSelected ? styles.selectedConfig : ''}
                           ${isDisabled ? styles.disabledConfig : ''}
                         `}
-                        onClick={() => !isDisabled && handleConfigSelection(config)}
+                        onClick={() => !isDisabled && handleConfigSelection(config.id)}
                       >
                         <div className={styles.configHeader}>
-                          <span className={styles.configName}>{config.label}</span>
-                          {subscriptionTier === 'free' && config.cpu === 1 && config.memory === 0.5 && (
-                            <span className={styles.minutesTag}>Minutes Left: {remainingMinutes}</span>
+                          <span className={styles.configName}>{config.name}</span>
+                          {config.timeLimit > 0 && (
+                            <span className={styles.minutesTag}>Time Limit: {config.timeLimit} minutes</span>
                           )}
                         </div>
                         <div className={styles.configDetails}>
                           <div className={styles.configDescription}>{config.description}</div>
+                          <div>CPU: {config.specs.cpu.cores} vCPUs</div>
+                          <div>Memory: {config.specs.memory} GB</div>
+                          <div>Storage: {config.specs.storage} GB</div>
+                          <div>Region: {config.region.displayName} ({config.region.name})</div>
                           <div className={styles.instancesAvailable}>
                             {isDisabled ? (
                               <span className={styles.noInstancesLeft}>No instances left</span>
                             ) : (
                               <span className={styles.instancesLeft}>
-                                {remainingInstances} instance{remainingInstances !== 1 ? 's' : ''} available
+                                {config.availableInstances} instance{config.availableInstances !== 1 ? 's' : ''} available
                               </span>
                             )}
                           </div>
@@ -544,31 +653,25 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                   })}
                 </div>
               </div>
-              
-              {/* Show only the tier info relevant to the user's subscription */}
-              {subscriptionTier === 'free' && (
-                <p className={styles.tierLimitInfo}>
-                  Free tier: Limited to 1 instance of 1vCPU, 0.5GB RAM with 60 minute runtime limit
-                </p>
-              )}
-              
-              {subscriptionTier === 'startup' && (
-                <p className={styles.tierLimitInfo}>
-                  Startup tier: Can create up to 2 instances of 1vCPU, 0.5GB RAM or 1 instance of 2vCPU, 1GB RAM
-                </p>
-              )}
-              
-              {subscriptionTier === 'basic' && (
-                <p className={styles.tierLimitInfo}>
-                  Basic tier: Can create up to 3 instances of 2vCPU, 1GB RAM or 6 instances of 1vCPU, 0.5GB RAM
-                </p>
-              )}
-              
-              {subscriptionTier === 'gold' && (
-                <p className={styles.tierLimitInfo}>
-                  Gold tier: Can create 1 instance of 8vCPU, 16GB RAM or 4 instances of 2vCPU, 1GB RAM or 8 instances of 1vCPU, 0.5GB RAM
-                </p>
-              )}
+            </div>
+            
+            {/* VM Image/OS */}
+            <div className={styles.formGroup}>
+              <label>Operating System</label>
+              <div className={styles.osOptions}>
+                {operatingSystems.map(os => (
+                  <div 
+                    key={os.id} 
+                    className={`${styles.osOption} ${
+                      formData.os.name === os.name && formData.os.version === os.version ? styles.selectedOs : ''
+                    }`}
+                    onClick={() => handleOsSelection(os.id)}
+                  >
+                    <span className={styles.osIcon}>{os.name.includes('Ubuntu') || os.name.includes('Linux') ? '🐧' : '🪟'}</span>
+                    <span className={styles.osName}>{os.description || `${os.name} ${os.version}`}</span>
+                  </div>
+                ))}
+              </div>
             </div>
             
             {/* Administrator Account */}
@@ -580,11 +683,16 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                   <input
                     type="text"
                     id="username"
-                    name="username"
-                    value={formData.username}
+                    name="adminAccount.username"
+                    value={formData.adminAccount.username}
                     onChange={handleInputChange}
                     className={styles.input}
+                    placeholder="adminuser"
+                    pattern="[a-zA-Z0-9_-]+"
+                    minLength={3}
+                    maxLength={20}
                   />
+                  <p className={styles.helperText}>Only alphanumeric characters, underscores, and hyphens, 3-20 characters</p>
                 </div>
               </div>
               
@@ -594,11 +702,14 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                   <input
                     type="password"
                     id="password"
-                    name="password"
-                    value={formData.password}
+                    name="adminAccount.password"
+                    value={formData.adminAccount.password}
                     onChange={handleInputChange}
                     className={styles.input}
+                    placeholder="Leave blank to auto-generate"
+                    minLength={8}
                   />
+                  <p className={styles.helperText}>At least 8 characters with uppercase, lowercase, number, and special character</p>
                 </div>
               </div>
               
@@ -608,58 +719,26 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                   <input
                     type="password"
                     id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
+                    name="adminAccount.confirmPassword"
+                    value={formData.adminAccount.confirmPassword}
                     onChange={handleInputChange}
                     className={styles.input}
                   />
                 </div>
               </div>
-            </div>
-            
-            {/* Inbound Port Rules */}
-            <div className={styles.formGroup}>
-              <label>Inbound Port Rules</label>
-              <p className={styles.helperText}>
-                Select which virtual machine network ports are accessible from the public internet. 
-                You can specify more limited or granular network access on the Networking tab.
-              </p>
               
-              <div className={styles.radioGroup}>
-                <label className={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="inboundPortsOption"
-                    checked={formData.inboundPorts.length === 0}
-                    onChange={() => setFormData({...formData, inboundPorts: []})}
-                  />
-                  <span>None</span>
-                </label>
-                
-                <label className={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="inboundPortsOption"
-                    checked={formData.inboundPorts.length > 0}
-                    onChange={() => setFormData({...formData, inboundPorts: ['3389']})}
-                  />
-                  <span>Allow selected ports</span>
-                </label>
-              </div>
-              
-              {formData.inboundPorts.length > 0 && (
-                <div className={styles.portsSelection}>
-                  <div className={styles.portOption}>
-                    <label className={styles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        checked={formData.inboundPorts.includes('3389')}
-                        onChange={() => handlePortSelection('3389')}
-                      />
-                      <span>RDP (3389)</span>
-                    </label>
-                    <p className={styles.portRecommended}>Recommended for connecting with RDP</p>
-                  </div>
+              {/* RDP option for Windows */}
+              {formData.os.name === 'Windows' && (
+                <div className={styles.formGroup}>
+                  <label className={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      name="adminAccount.rdpEnabled"
+                      checked={formData.adminAccount.rdpEnabled}
+                      onChange={handleInputChange}
+                    />
+                    <span>Enable RDP (port 3389)</span>
+                  </label>
                 </div>
               )}
             </div>
@@ -675,7 +754,7 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
             <div className={styles.formGroup}>
               <label>OS Disk</label>
               <div className={styles.osDiskInfo}>
-                <span>128GB Fast SSD</span>
+                <span>{selectedConfig ? `${selectedConfig.specs.storage}GB Standard SSD` : '50GB Standard SSD'}</span>
               </div>
             </div>
             
@@ -700,32 +779,48 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                     <div key={index} className={styles.diskItem}>
                       <div className={styles.diskDetails}>
                         <div className={styles.diskName}>
+                          <label>Name:</label>
                           <input
                             type="text"
                             value={disk.name}
                             onChange={(e) => handleEditDisk(index, 'name', e.target.value)}
                             className={styles.diskNameInput}
+                            pattern="[a-zA-Z0-9-]+"
+                            minLength={3}
+                            maxLength={50}
                           />
                         </div>
                         <div className={styles.diskSize}>
+                          <label>Size:</label>
                           <input
                             type="number"
-                            value={disk.size}
-                            onChange={(e) => handleEditDisk(index, 'size', parseInt(e.target.value))}
+                            value={disk.sizeGB}
+                            onChange={(e) => handleEditDisk(index, 'sizeGB', parseInt(e.target.value))}
                             className={styles.diskSizeInput}
                             min="1"
-                            max="1024"
+                            max="32767"
                           />
                           <span>GB</span>
+                        </div>
+                        <div className={styles.diskType}>
+                          <label>Type:</label>
+                          <select
+                            value={disk.storageType}
+                            onChange={(e) => handleEditDisk(index, 'storageType', e.target.value)}
+                            className={styles.select}
+                          >
+                            <option value="Standard_LRS">Standard HDD</option>
+                            <option value="StandardSSD_LRS">Standard SSD</option>
+                            <option value="Premium_LRS">Premium SSD</option>
+                          </select>
                         </div>
                       </div>
                       <div className={styles.diskActions}>
                         <button 
                           type="button"
-                          className={styles.deleteButton}
                           onClick={() => handleDeleteDisk(index)}
                         >
-                          Delete
+                          Remove
                         </button>
                       </div>
                     </div>
@@ -741,233 +836,94 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
           <>
             <h3 className={styles.stepTitle}>Networking</h3>
             
-            <div className={styles.formGroup}>
-              <label>Network Interface</label>
-              <p className={styles.helperText}>
-                When creating a virtual machine, a network interface will be created for you.
-              </p>
-            </div>
-            
-            {/* Virtual Network */}
+            {/* Virtual Network - Show simplified version if API endpoints not available */}
             <div className={styles.formGroup}>
               <label htmlFor="virtualNetwork">Virtual Network</label>
-              <div className={styles.networkSelectGroup}>
+              {virtualNetworks.length > 0 ? (
                 <select
                   id="virtualNetwork"
-                  name="networkInterface.virtualNetwork"
-                  value={formData.networkInterface.virtualNetwork}
+                  name="networking.virtualNetworkId"
+                  value={formData.networking.virtualNetworkId}
                   onChange={handleInputChange}
                   className={styles.select}
                 >
-                  <option value="AyushAdhikari-vnet">AyushAdhikari-vnet</option>
+                  <option value="">None (Use default network)</option>
+                  {virtualNetworks.map(vnet => (
+                    <option key={vnet.id} value={vnet.id}>
+                      {vnet.name} ({vnet.addressSpace})
+                    </option>
+                  ))}
                 </select>
-                <button type="button" className={styles.createNewButton}>
-                  Create New
-                </button>
-              </div>
-            </div>
-            
-            {/* Subnet */}
-            <div className={styles.formGroup}>
-              <label htmlFor="subnet">Subnet</label>
-              <div className={styles.networkSelectGroup}>
-                <select
-                  id="subnet"
-                  name="networkInterface.subnet"
-                  value={formData.networkInterface.subnet}
-                  onChange={handleInputChange}
-                  className={styles.select}
-                >
-                  <option value="default (10.0.0.0/24)">default (10.0.0.0/24)</option>
-                </select>
-                <button type="button" className={styles.manageButton}>
-                  Manage Subnet Configuration
-                </button>
-              </div>
-            </div>
-            
-            {/* Public IP */}
-            <div className={styles.formGroup}>
-              <label htmlFor="publicIp">Public IP</label>
-              <select
-                id="publicIp"
-                name="networkInterface.publicIpName"
-                value={formData.networkInterface.publicIpName}
-                onChange={handleInputChange}
-                className={styles.select}
-              >
-                <option value={`ip-${Math.random().toString(36).substring(2, 8)}`}>
-                  (new) {formData.networkInterface.publicIpName}
-                </option>
-              </select>
-              <button type="button" className={styles.createNewButton}>
-                Create New
-              </button>
-            </div>
-            
-            {/* Security Group */}
-            <div className={styles.formGroup}>
-              <label>NIC Network Security Group</label>
-              <div className={styles.radioGroup}>
-                <label className={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="networkInterface.securityGroup" 
-                    value="None"
-                    checked={formData.networkInterface.securityGroup === "None"}
-                    onChange={handleInputChange}
-                  />
-                  <span>None</span>
-                </label>
-                
-                <label className={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="networkInterface.securityGroup" 
-                    value="Basic"
-                    checked={formData.networkInterface.securityGroup === "Basic"}
-                    onChange={handleInputChange}
-                  />
-                  <span>Basic</span>
-                </label>
-                
-                <label className={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="networkInterface.securityGroup" 
-                    value="Advanced"
-                    checked={formData.networkInterface.securityGroup === "Advanced"}
-                    onChange={handleInputChange}
-                  />
-                  <span>Advanced</span>
-                </label>
-              </div>
-            </div>
-            
-            {/* Public Inbound Ports */}
-            <div className={styles.formGroup}>
-              <label>Public Inbound Ports</label>
-              <div className={styles.radioGroup}>
-                <label className={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="inboundPortsOption"
-                    checked={formData.inboundPorts.length === 0}
-                    onChange={() => setFormData({...formData, inboundPorts: []})}
-                  />
-                  <span>None</span>
-                </label>
-                
-                <label className={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="inboundPortsOption"
-                    checked={formData.inboundPorts.length > 0}
-                    onChange={() => setFormData({...formData, inboundPorts: ['3389']})}
-                  />
-                  <span>Allow selected ports</span>
-                </label>
-              </div>
-              
-              {formData.inboundPorts.length > 0 && (
-                <div className={styles.portsSelection}>
-                  <div className={styles.portOption}>
-                    <label className={styles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        checked={formData.inboundPorts.includes('3389')}
-                        onChange={() => handlePortSelection('3389')}
-                      />
-                      <span>RDP (3389)</span>
-                    </label>
-                  </div>
-                  
-                  <p className={styles.securityWarning}>
-                    This will allow all IP addresses to access your virtual machine. 
-                    This is only recommended for testing. Use the Advanced controls to 
-                    create rules to limit inbound traffic to known IP addresses.
-                  </p>
+              ) : (
+                <div className={styles.placeholderField}>
+                  Default virtual network will be used
                 </div>
               )}
             </div>
             
-            {/* Additional Network Options */}
-            <div className={styles.formGroup}>
-              <label className={styles.checkboxLabel}>
-                <input 
-                  type="checkbox"
-                  name="networkInterface.deleteWithVM"
-                  checked={formData.networkInterface.deleteWithVM}
+            {/* Subnet - Only show if virtual network is selected and networks are available */}
+            {formData.networking.virtualNetworkId && virtualNetworks.length > 0 && (
+              <div className={styles.formGroup}>
+                <label htmlFor="subnet">Subnet</label>
+                <select
+                  id="subnet"
+                  name="networking.subnetId"
+                  value={formData.networking.subnetId}
                   onChange={handleInputChange}
-                />
-                <span>Delete public IP and NIC when VM is deleted</span>
-              </label>
-            </div>
-            
-            <div className={styles.formGroup}>
-              <label className={styles.checkboxLabel}>
-                <input 
-                  type="checkbox"
-                  name="networkInterface.acceleratedNetworking"
-                  checked={formData.networkInterface.acceleratedNetworking}
-                  onChange={handleInputChange}
-                />
-                <span>Enable accelerated networking</span>
-              </label>
-            </div>
-            
-            {/* Load Balancing */}
-            <div className={styles.formGroup}>
-              <label>Load Balancing</label>
-              <p className={styles.helperText}>
-                You can place this virtual machine in the backend pool of an existing Azure load balancing solution.
-              </p>
-              
-              <div className={styles.loadBalancingOptions}>
-                <label className={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="loadBalancing" 
-                    value="None"
-                    checked={formData.loadBalancing === "None"}
-                    onChange={handleInputChange}
-                  />
-                  <span>None</span>
-                </label>
-                
-                <label className={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="loadBalancing" 
-                    value="Azure load balancer"
-                    checked={formData.loadBalancing === "Azure load balancer"}
-                    onChange={handleInputChange}
-                  />
-                  <div className={styles.optionWithDescription}>
-                    <span className={styles.optionTitle}>Azure load balancer</span>
-                    <span className={styles.optionDescription}>
-                      Supports all TCP/UDP network traffic, port-forwarding, and outbound flows.
-                    </span>
-                  </div>
-                </label>
-                
-                <label className={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="loadBalancing" 
-                    value="Application gateway"
-                    checked={formData.loadBalancing === "Application gateway"}
-                    onChange={handleInputChange}
-                  />
-                  <div className={styles.optionWithDescription}>
-                    <span className={styles.optionTitle}>Application gateway</span>
-                    <span className={styles.optionDescription}>
-                      Web traffic load balancer for HTTP/HTTPS with URL-based routing, SSL termination, 
-                      session persistence, and web application firewall.
-                    </span>
-                  </div>
-                </label>
+                  className={styles.select}
+                >
+                  <option value="">None (Use default subnet)</option>
+                  {subnets.map(subnet => (
+                    <option key={subnet.id} value={subnet.id}>
+                      {subnet.name} ({subnet.addressPrefix})
+                    </option>
+                  ))}
+                </select>
               </div>
+            )}
+            
+            {/* Public IP - Keep this regardless of API availability */}
+            <div className={styles.formGroup}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="networking.publicIp"
+                  checked={formData.networking.publicIp}
+                  onChange={handleInputChange}
+                />
+                <span>Create Public IP</span>
+              </label>
+              
+              {formData.networking.publicIp && (
+                <div className={styles.formGroup}>
+                  <label className={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      name="networking.deletePublicIpWithVm"
+                      checked={formData.networking.deletePublicIpWithVm}
+                      onChange={handleInputChange}
+                    />
+                    <span>Delete Public IP when VM is deleted</span>
+                  </label>
+                </div>
+              )}
+            </div>
+            
+            {/* Delete NIC with VM */}
+            <div className={styles.formGroup}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="networking.deleteNicWithVm"
+                  checked={formData.networking.deleteNicWithVm}
+                  onChange={handleInputChange}
+                />
+                <span>Delete network interface when VM is deleted</span>
+              </label>
+            </div>
+            
+            <div className={styles.infoMessage}>
+              <p>Note: The VM will be created with appropriate default network settings even if network configuration options are limited.</p>
             </div>
           </>
         );
@@ -984,34 +940,42 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                 <span className={styles.reviewValue}>{formData.name}</span>
               </div>
               <div className={styles.reviewItem}>
-                <span className={styles.reviewLabel}>VM Type:</span>
-                <span className={styles.reviewValue}>{formData.type}</span>
-              </div>
-              <div className={styles.reviewItem}>
-                <span className={styles.reviewLabel}>Image:</span>
+                <span className={styles.reviewLabel}>Configuration:</span>
                 <span className={styles.reviewValue}>
-                  {imageOptions.find(img => img.id === formData.image)?.name || formData.image}
+                  {selectedConfig ? selectedConfig.name : 'Not selected'}
                 </span>
               </div>
               <div className={styles.reviewItem}>
-                <span className={styles.reviewLabel}>VM Configuration:</span>
-                <span className={styles.reviewValue}>{formData.cpu}vCPU, {formData.memory}GB RAM</span>
+                <span className={styles.reviewLabel}>Region:</span>
+                <span className={styles.reviewValue}>{formData.region}</span>
               </div>
               <div className={styles.reviewItem}>
-                <span className={styles.reviewLabel}>Username:</span>
-                <span className={styles.reviewValue}>{formData.username}</span>
+                <span className={styles.reviewLabel}>Zone:</span>
+                <span className={styles.reviewValue}>{formData.zone}</span>
               </div>
               <div className={styles.reviewItem}>
-                <span className={styles.reviewLabel}>Inbound Ports:</span>
+                <span className={styles.reviewLabel}>Operating System:</span>
                 <span className={styles.reviewValue}>
-                  {formData.inboundPorts.length > 0 ? formData.inboundPorts.join(', ') : 'None'}
+                  {formData.os.name} {formData.os.version}
                 </span>
               </div>
+              <div className={styles.reviewItem}>
+                <span className={styles.reviewLabel}>Admin Username:</span>
+                <span className={styles.reviewValue}>{formData.adminAccount.username}</span>
+              </div>
+              {formData.os.name === 'Windows' && (
+                <div className={styles.reviewItem}>
+                  <span className={styles.reviewLabel}>RDP Enabled:</span>
+                  <span className={styles.reviewValue}>{formData.adminAccount.rdpEnabled ? 'Yes' : 'No'}</span>
+                </div>
+              )}
               
               <h4>Disks</h4>
               <div className={styles.reviewItem}>
                 <span className={styles.reviewLabel}>OS Disk:</span>
-                <span className={styles.reviewValue}>128GB Fast SSD</span>
+                <span className={styles.reviewValue}>
+                  {selectedConfig ? `${selectedConfig.specs.storage}GB Standard SSD` : '50GB Standard SSD'}
+                </span>
               </div>
               {formData.additionalDisks.length > 0 && (
                 <>
@@ -1022,7 +986,7 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                   {formData.additionalDisks.map((disk, index) => (
                     <div key={index} className={styles.reviewSubItem}>
                       <span className={styles.reviewLabel}>{disk.name}:</span>
-                      <span className={styles.reviewValue}>{disk.size}GB</span>
+                      <span className={styles.reviewValue}>{disk.sizeGB}GB ({disk.storageType})</span>
                     </div>
                   ))}
                 </>
@@ -1031,25 +995,33 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
               <h4>Networking</h4>
               <div className={styles.reviewItem}>
                 <span className={styles.reviewLabel}>Virtual Network:</span>
-                <span className={styles.reviewValue}>{formData.networkInterface.virtualNetwork}</span>
-              </div>
-              <div className={styles.reviewItem}>
-                <span className={styles.reviewLabel}>Subnet:</span>
-                <span className={styles.reviewValue}>{formData.networkInterface.subnet}</span>
-              </div>
-              <div className={styles.reviewItem}>
-                <span className={styles.reviewLabel}>Public IP:</span>
                 <span className={styles.reviewValue}>
-                  {formData.networkInterface.publicIp ? formData.networkInterface.publicIpName : 'None'}
+                  {formData.networking.virtualNetworkId ? 
+                    virtualNetworks.find(vn => vn.id === formData.networking.virtualNetworkId)?.name || 'Selected' : 
+                    'Default'}
                 </span>
               </div>
+              {formData.networking.virtualNetworkId && formData.networking.subnetId && (
+                <div className={styles.reviewItem}>
+                  <span className={styles.reviewLabel}>Subnet:</span>
+                  <span className={styles.reviewValue}>
+                    {subnets.find(s => s.id === formData.networking.subnetId)?.name || 'Selected'}
+                  </span>
+                </div>
+              )}
               <div className={styles.reviewItem}>
-                <span className={styles.reviewLabel}>Security Group:</span>
-                <span className={styles.reviewValue}>{formData.networkInterface.securityGroup}</span>
+                <span className={styles.reviewLabel}>Public IP:</span>
+                <span className={styles.reviewValue}>{formData.networking.publicIp ? 'Yes' : 'No'}</span>
               </div>
+              {formData.networking.publicIp && (
+                <div className={styles.reviewItem}>
+                  <span className={styles.reviewLabel}>Delete Public IP with VM:</span>
+                  <span className={styles.reviewValue}>{formData.networking.deletePublicIpWithVm ? 'Yes' : 'No'}</span>
+                </div>
+              )}
               <div className={styles.reviewItem}>
-                <span className={styles.reviewLabel}>Load Balancing:</span>
-                <span className={styles.reviewValue}>{formData.loadBalancing}</span>
+                <span className={styles.reviewLabel}>Delete Network Interface with VM:</span>
+                <span className={styles.reviewValue}>{formData.networking.deleteNicWithVm ? 'Yes' : 'No'}</span>
               </div>
             </div>
           </>
@@ -1059,9 +1031,6 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
         return null;
     }
   };
-  
-  // If drawer is not open and not closing, don't render anything
-  if (!isOpen && !isClosing) return null;
   
   return (
     <>
@@ -1084,6 +1053,9 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
           
           {error && (
             <div className={styles.errorMessage}>{error}</div>
+          )}
+          {apiErrors.length > 0 && (
+            <ApiErrorDisplay errors={apiErrors} />
           )}
           
           <div className={styles.stepIndicator}>
@@ -1115,6 +1087,7 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                 type="button"
                 className={styles.backButton}
                 onClick={goToPreviousStep}
+                disabled={apiLoading}
               >
                 Back
               </button>
@@ -1125,6 +1098,7 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                 type="button"
                 className={styles.nextButton}
                 onClick={goToNextStep}
+                disabled={apiLoading || !isFormReady}
               >
                 Next
               </button>
@@ -1133,8 +1107,9 @@ const CreateVMDrawer = ({ isOpen, onClose }) => {
                 type="button"
                 className={styles.createButton}
                 onClick={handleCreateVM}
+                disabled={apiLoading || creating || !isFormReady || !isConfigAvailable}
               >
-                Create
+                {creating ? 'Creating...' : 'Create VM'}
               </button>
             )}
           </div>

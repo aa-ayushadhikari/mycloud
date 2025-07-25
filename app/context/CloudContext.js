@@ -1,345 +1,113 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { subscriptionService } from '../services/subscriptionService';
+import { instanceService } from '../services/instanceService';
 
 const CloudContext = createContext();
 
 export const CloudProvider = ({ children }) => {
-  // State for various resources
+  // State for various resources - now sourced from API
   const [virtualMachines, setVirtualMachines] = useState([]);
-  const [storages, setStorages] = useState([]);
-  const [networks, setNetworks] = useState([]);
+  const [storages, setStorages] = useState([]); // Keep for now, but should be API-driven
+  const [networks, setNetworks] = useState([]); // Keep for now, but should be API-driven
   const [loading, setLoading] = useState(true);
   const [resources, setResources] = useState({
-    cpu: { total: 1, used: 0 },
-    memory: { total: 0.5, used: 0 },
-    storage: { total: 50, used: 0 },
+    cpu: { total: 0, used: 0 },
+    memory: { total: 0, used: 0 },
+    storage: { total: 0, used: 0 },
   });
 
-  // Usage metrics with randomized data for simulation
-  const [metrics, setMetrics] = useState({
-    cpu: generateRandomUsageData(24),
-    memory: generateRandomUsageData(24),
-    network: generateRandomUsageData(24),
-    storage: generateRandomUsageData(24),
-  });
-
-  // Generate random data points for graphs
-  function generateRandomUsageData(points) {
-    return Array.from({ length: points }, () => ({
-      timestamp: new Date(Date.now() - Math.floor(Math.random() * 24 * 60 * 60 * 1000)).toISOString(),
-      value: Math.floor(Math.random() * 100),
-    })).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-  }
-
-  // Get the current user from auth context
   const { user } = useAuth();
+
+  // Helper function to calculate resource usage from real instance data
+  const calculateResourceUsage = (instances, subDetails) => {
+    let cpuUsed = 0;
+    let memoryUsed = 0;
+    
+    instances.forEach(vm => {
+      if (vm.status === 'running') {
+        cpuUsed += vm.specs?.cpu?.cores || vm.cpu || 0;
+        memoryUsed += vm.specs?.memory || vm.memory || 0;
+      }
+    });
+
+    return {
+      cpu: {
+        total: subDetails?.cpu?.total || 1,
+        used: cpuUsed,
+      },
+      memory: {
+        total: subDetails?.memory?.total || 0.5,
+        used: memoryUsed,
+      },
+      storage: { // This would also need to be calculated based on API data for disks
+        total: subDetails?.storage?.total || 50,
+        used: 0, 
+      },
+    };
+  };
   
-  // Load data from localStorage and update with subscription data
-  useEffect(() => {
+  // Fetch all cloud data from APIs when user is available
+  const fetchCloudData = useCallback(async () => {
     if (!user) return;
     
-    const userId = user.id || user.email;
-    const storedVMs = localStorage.getItem(`mycloud_vms_${userId}`);
-    const storedStorages = localStorage.getItem(`mycloud_storages_${userId}`);
-    const storedNetworks = localStorage.getItem(`mycloud_networks_${userId}`);
-    const storedResources = localStorage.getItem(`mycloud_resources_${userId}`);
-    
-    // Load stored VMs and calculate resource usage from them
-    let vms = [];
-    if (storedVMs) {
-      vms = JSON.parse(storedVMs);
-      setVirtualMachines(vms);
+    setLoading(true);
+    try {
+      // Fetch instances and subscription details in parallel
+      const [instanceData, subData] = await Promise.all([
+        instanceService.getAllInstances(),
+        subscriptionService.getUserSubscription()
+      ]);
+
+      const fetchedInstances = instanceData.instances || [];
+      setVirtualMachines(fetchedInstances);
+      
+      // Extract subscription limits or set defaults
+      const subDetails = {
+        cpu: { total: subData?.tier?.resources?.cpu?.total || 1 },
+        memory: { total: subData?.tier?.resources?.memory?.total || 0.5 },
+        storage: { total: subData?.tier?.resources?.storage?.total || 50 },
+      };
+
+      // Calculate and set the resource usage based on fetched data
+      const calculatedResources = calculateResourceUsage(fetchedInstances, subDetails);
+      setResources(calculatedResources);
+
+    } catch (error) {
+      console.error("Failed to fetch cloud data:", error);
+      // Set to default empty state on error
+      setVirtualMachines([]);
+      setResources({
+        cpu: { total: 0, used: 0 },
+        memory: { total: 0, used: 0 },
+        storage: { total: 0, used: 0 },
+      });
+    } finally {
+      setLoading(false);
     }
-    
-    if (storedStorages) setStorages(JSON.parse(storedStorages));
-    if (storedNetworks) setNetworks(JSON.parse(storedNetworks));
-
-    // Load subscription data to get resource limits
-    const loadSubscriptionData = async () => {
-      try {
-        // Get subscription tiers and user's current subscription
-        let subscriptionTiers;
-        let userSubscription;
-        
-        try {
-          // Fetch subscription data
-          const tiersResponse = await subscriptionService.getAllSubscriptionTiers();
-          const userSubResponse = await subscriptionService.getUserSubscription();
-          
-          // Check if response is an array or contains a subscriptions array
-          if (Array.isArray(tiersResponse)) {
-            subscriptionTiers = tiersResponse;
-          } else if (tiersResponse && tiersResponse.subscriptions && Array.isArray(tiersResponse.subscriptions)) {
-            subscriptionTiers = tiersResponse.subscriptions;
-          } else {
-            // Fallback to mock data if API response format is unexpected
-            throw new Error("Unexpected API response format");
-          }
-          
-          // Check user subscription format
-          if (userSubResponse && userSubResponse.tier) {
-            userSubscription = userSubResponse;
-          } else if (userSubResponse && userSubResponse.subscription && userSubResponse.subscription.tier) {
-            userSubscription = userSubResponse.subscription;
-          } else {
-            userSubscription = { tier: 'free' }; // Default
-          }
-        } catch (error) {
-          console.warn("Could not fetch subscription data from API, using mock data", error);
-          subscriptionTiers = subscriptionService.getSubscriptionTiers();
-          userSubscription = { tier: 'free' }; // Default to free tier
-        }
-        
-        // Log the subscription data for debugging
-        console.log("Subscription tiers:", subscriptionTiers);
-        console.log("User subscription:", userSubscription);
-        
-        // Find the user's subscription tier details
-        // Make sure subscriptionTiers is an array before calling find
-        // Extract the tier ID based on API response format
-        const tierIdentifier = userSubscription.tier?.id || userSubscription.tier;
-        
-        const userTier = Array.isArray(subscriptionTiers) 
-          ? (subscriptionTiers.find(tier => tier.id === tierIdentifier) || 
-             subscriptionTiers.find(tier => tier.id === 'free'))
-          : null;
-        
-        if (userTier) {
-          // Extract resource values safely with defaults
-          const cpuTotal = userTier.features?.compute?.vCPU || 
-                          userTier.resources?.compute?.vCpuCores || 
-                          userTier.resources?.cpu?.total || 1;
-                          
-          const memoryTotal = userTier.features?.compute?.ram || 
-                             userTier.resources?.compute?.ramGB || 
-                             userTier.resources?.memory?.total || 0.5;
-                             
-          const storageTotal = userTier.features?.storage?.total || 
-                              userTier.resources?.storage?.totalGB || 
-                              userTier.resources?.storage?.total || 50;
-          
-          // Calculate actual usage from VMs
-          const calculateUsedResources = () => {
-            let cpuUsed = 0;
-            let memoryUsed = 0;
-            
-            // Sum up resources from all running VMs
-            vms.forEach(vm => {
-              if (vm.status !== 'terminated') {
-                cpuUsed += vm.cpu || 0;
-                memoryUsed += vm.memory || 0;
-              }
-            });
-            
-            return {
-              cpu: cpuUsed,
-              memory: memoryUsed
-            };
-          };
-          
-          const calculatedUsage = calculateUsedResources();
-          
-          let resourcesData = {
-            cpu: { 
-              total: cpuTotal,
-              used: calculatedUsage.cpu
-            },
-            memory: { 
-              total: memoryTotal,
-              used: calculatedUsage.memory
-            },
-            storage: { 
-              total: storageTotal,
-              used: 0 // We'll calculate this separately if needed
-            }
-          };
-          
-          console.log("Setting resource data with calculated usage:", resourcesData);
-          setResources(resourcesData);
-        }
-      } catch (error) {
-        console.error("Error loading subscription data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadSubscriptionData();
-
-    // Update metrics periodically to simulate real-time data
-    const interval = setInterval(() => {
-      updateMetrics();
-    }, 30000);
-
-    return () => clearInterval(interval);
   }, [user]);
 
-  // Update localStorage whenever state changes
   useEffect(() => {
-    if (!loading && user) {
-      const userId = user.id || user.email;
-      localStorage.setItem(`mycloud_vms_${userId}`, JSON.stringify(virtualMachines));
-      localStorage.setItem(`mycloud_storages_${userId}`, JSON.stringify(storages));
-      localStorage.setItem(`mycloud_networks_${userId}`, JSON.stringify(networks));
-      localStorage.setItem(`mycloud_resources_${userId}`, JSON.stringify(resources));
-    }
-  }, [virtualMachines, storages, networks, resources, loading, user]);
+    fetchCloudData();
+  }, [fetchCloudData]);
 
-  // Update metrics with new random data points
-  const updateMetrics = () => {
-    setMetrics(prev => ({
-      cpu: [...prev.cpu.slice(1), { timestamp: new Date().toISOString(), value: Math.floor(Math.random() * 100) }],
-      memory: [...prev.memory.slice(1), { timestamp: new Date().toISOString(), value: Math.floor(Math.random() * 100) }],
-      network: [...prev.network.slice(1), { timestamp: new Date().toISOString(), value: Math.floor(Math.random() * 100) }],
-      storage: [...prev.storage.slice(1), { timestamp: new Date().toISOString(), value: Math.floor(Math.random() * 100) }],
-    }));
-  };
+  // This function will allow child components (like the instances page) to trigger a refresh
+  const refreshVirtualMachines = useCallback(() => {
+    fetchCloudData();
+  }, [fetchCloudData]);
 
-  // Create a new virtual machine
-  const createVirtualMachine = (vmData) => {
-    const newVM = {
-      id: `vm_${Math.random().toString(36).substr(2, 9)}`,
-      createdAt: new Date().toISOString(),
-      status: 'starting',
-      ...vmData
-    };
-
-    // Update resources
-    setResources(prev => ({
-      ...prev,
-      cpu: { ...prev.cpu, used: prev.cpu.used + vmData.cpu },
-      memory: { ...prev.memory, used: prev.memory.used + vmData.memory }
-    }));
-
-    // Add the VM
-    setVirtualMachines(prev => [...prev, newVM]);
-
-    // Simulate VM starting up
-    setTimeout(() => {
-      setVirtualMachines(prev => 
-        prev.map(vm => vm.id === newVM.id ? { ...vm, status: 'running' } : vm)
-      );
-    }, 3000);
-
-    return newVM;
-  };
-
-  // Update VM status
+  // This function is now only for optimistic UI updates on the client
   const updateVMStatus = (vmId, status) => {
     setVirtualMachines(prev => 
-      prev.map(vm => vm.id === vmId ? { ...vm, status } : vm)
+      prev.map(vm => (vm.id === vmId ? { ...vm, status } : vm))
     );
-
-    // Simulate status changes
-    if (status === 'stopping') {
-      setTimeout(() => {
-        setVirtualMachines(prev => 
-          prev.map(vm => vm.id === vmId ? { ...vm, status: 'stopped' } : vm)
-        );
-      }, 2000);
-    } else if (status === 'starting') {
-      setTimeout(() => {
-        setVirtualMachines(prev => 
-          prev.map(vm => vm.id === vmId ? { ...vm, status: 'running' } : vm)
-        );
-      }, 2000);
-    }
   };
-
-  // Delete VM
+  
+  // This function is now only for optimistic UI updates on the client
   const deleteVM = (vmId) => {
-    const vm = virtualMachines.find(vm => vm.id === vmId);
-    
-    if (vm) {
-      // Free up resources
-      setResources(prev => ({
-        ...prev,
-        cpu: { ...prev.cpu, used: prev.cpu.used - vm.cpu },
-        memory: { ...prev.memory, used: prev.memory.used - vm.memory }
-      }));
-
-      // Remove VM
-      setVirtualMachines(prev => prev.filter(vm => vm.id !== vmId));
-    }
-  };
-
-  // Create storage
-  const createStorage = (storageData) => {
-    const newStorage = {
-      id: `storage_${Math.random().toString(36).substr(2, 9)}`,
-      createdAt: new Date().toISOString(),
-      status: 'available',
-      ...storageData
-    };
-
-    // Update resources
-    setResources(prev => ({
-      ...prev,
-      storage: { ...prev.storage, used: prev.storage.used + storageData.size }
-    }));
-
-    // Add storage
-    setStorages(prev => [...prev, newStorage]);
-    
-    return newStorage;
-  };
-
-  // Delete storage
-  const deleteStorage = (storageId) => {
-    const storage = storages.find(s => s.id === storageId);
-    
-    if (storage) {
-      // Free up resources
-      setResources(prev => ({
-        ...prev,
-        storage: { ...prev.storage, used: prev.storage.used - storage.size }
-      }));
-
-      // Remove storage
-      setStorages(prev => prev.filter(s => s.id !== storageId));
-    }
-  };
-
-  // Create network
-  const createNetwork = (networkData) => {
-    const newNetwork = {
-      id: `network_${Math.random().toString(36).substr(2, 9)}`,
-      createdAt: new Date().toISOString(),
-      status: 'available',
-      ...networkData
-    };
-
-    setNetworks(prev => [...prev, newNetwork]);
-    
-    return newNetwork;
-  };
-
-  // Delete network
-  const deleteNetwork = (networkId) => {
-    setNetworks(prev => prev.filter(n => n.id !== networkId));
-  };
-
-  // Reset everything (for demo purposes)
-  const resetCloud = () => {
-    setVirtualMachines([]);
-    setStorages([]);
-    setNetworks([]);
-    setResources({
-      cpu: { total: 20, used: 0 },
-      memory: { total: 64, used: 0 },
-      storage: { total: 1024, used: 0 },
-    });
-    
-    if (user) {
-      const userId = user.id || user.email;
-      localStorage.removeItem(`mycloud_vms_${userId}`);
-      localStorage.removeItem(`mycloud_storages_${userId}`);
-      localStorage.removeItem(`mycloud_networks_${userId}`);
-      localStorage.removeItem(`mycloud_resources_${userId}`);
-    }
+    setVirtualMachines(prev => prev.filter(vm => vm.id !== vmId));
   };
 
   const value = {
@@ -347,16 +115,11 @@ export const CloudProvider = ({ children }) => {
     storages,
     networks,
     resources,
-    metrics,
     loading,
-    createVirtualMachine,
+    refreshVirtualMachines, // Expose the refresh function
     updateVMStatus,
     deleteVM,
-    createStorage,
-    deleteStorage,
-    createNetwork,
-    deleteNetwork,
-    resetCloud
+    // Note: createVirtualMachine is removed as it's handled in the drawer
   };
 
   return (
