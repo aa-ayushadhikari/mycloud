@@ -3,46 +3,89 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCloud } from '../../context/CloudContext';
+import { useSubscription } from '../../hooks/useSubscription';
+import { useAllInstances } from '../../hooks/useInstances';
+import { instanceService } from '../../services/instanceService';
 import styles from '../dashboard.module.css';
 import vmStyles from './compute.module.css';
+import instanceStyles from './instances/instances.module.css';
 
 const VirtualMachines = () => {
   const { 
-    virtualMachines,
-    updateVMStatus, 
-    deleteVM,
-    resources 
-  } = useCloud();
-  
+    instances: virtualMachines,
+    loading: vmsLoading,
+    refetchInstances
+  } = useAllInstances();
+
+  const {
+    userSubscription,
+    loading: subscriptionLoading,
+  } = useSubscription();
+
   const router = useRouter();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedVm, setSelectedVm] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  const loading = vmsLoading || subscriptionLoading;
+
+  const quotaUsage = userSubscription?.quotaUsage || {
+    compute: {
+      vCpuCores: { used: 0, total: 1 },
+      ramGB: { used: 0, total: 0.5 },
+    },
+  };
   
-  // Navigate to instances page with create action
+  const cpuUsage = quotaUsage.compute?.vCpuCores || { used: 0, total: 1 };
+  const memoryUsage = quotaUsage.compute?.ramGB || { used: 0, total: 0.5 };
+
   const navigateToCreateInstance = () => {
     router.push('/dashboard/compute/instances?action=create');
   };
 
-  // Start VM
-  const handleStartVM = (vmId) => {
-    updateVMStatus(vmId, 'starting');
-  };
-
-  // Stop VM
-  const handleStopVM = (vmId) => {
-    updateVMStatus(vmId, 'stopping');
-  };
-
-  // Delete VM
-  const handleDeleteVM = (vmId) => {
-    if (confirm('Are you sure you want to delete this VM? This action cannot be undone.')) {
-      deleteVM(vmId);
+  const handleAction = async (action, vmId) => {
+    try {
+      await action(vmId);
+      refetchInstances();
+    } catch (err) {
+      console.error(`Action failed for VM ${vmId}:`, err);
     }
   };
   
-  // Get formatted date
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
+  const handleStartVM = (vmId) => handleAction(instanceService.startInstance, vmId);
+  const handleStopVM = (vmId) => handleAction(instanceService.stopInstance, vmId);
+
+  const openDeleteModal = (vm) => {
+    setSelectedVm(vm);
+    setIsDeleteModalOpen(true);
+    setDeleteConfirmText('');
   };
+  
+  const closeDeleteModal = () => {
+    setSelectedVm(null);
+    setIsDeleteModalOpen(false);
+    setDeleteConfirmText('');
+  };
+  
+  const handleDeleteVM = async () => {
+    if (!selectedVm) return;
+    
+    // Optimistically update the UI by closing the modal
+    closeDeleteModal();
+    
+    try {
+      await instanceService.terminateInstance(selectedVm._id);
+      refetchInstances();
+    } catch (err) {
+      console.error(`Failed to delete VM ${selectedVm._id}:`, err);
+      // Optionally, show a notification to the user that deletion failed
+    }
+  };
+  
+  const formatDate = (dateString) => new Date(dateString).toLocaleString();
+  const getCpuCount = (vm) => vm?.specs?.cpu?.cores || vm?.cpu || '---';
+  const getMemorySize = (vm) => vm?.specs?.memory || vm?.memory || '---';
+  const getOsName = (vm) => vm?.os?.name || vm?.basicInfo?.os || '---';
 
   return (
     <div>
@@ -53,18 +96,17 @@ const VirtualMachines = () => {
         </button>
       </div>
 
-      {/* Resource summary */}
       <div className={vmStyles.resourceSummary}>
         <div className={vmStyles.resourceItem}>
           <span className={vmStyles.resourceLabel}>CPU</span>
           <div className={vmStyles.resourceValue}>
-            {resources.cpu.used} / {resources.cpu.total} vCPUs
+            {loading ? '...' : `${cpuUsage.used} / ${cpuUsage.total}`} vCPUs
           </div>
         </div>
         <div className={vmStyles.resourceItem}>
           <span className={vmStyles.resourceLabel}>Memory</span>
           <div className={vmStyles.resourceValue}>
-            {resources.memory.used} / {resources.memory.total} GB
+            {loading ? '...' : `${memoryUsage.used} / ${memoryUsage.total}`} GB
           </div>
         </div>
       </div>
@@ -78,7 +120,7 @@ const VirtualMachines = () => {
           </p>
         </Link>
         
-        <Link href="/dashboard/compute/clusters" className={vmStyles.serviceCard}>
+        <Link href="/dashboard/compute/clusters" className={`${vmStyles.serviceCard} ${vmStyles.disabledCard}`}>
           <div className={vmStyles.serviceIcon}>🔄</div>
           <h3 className={vmStyles.serviceTitle}>Clusters</h3>
           <p className={vmStyles.serviceDescription}>
@@ -86,7 +128,7 @@ const VirtualMachines = () => {
           </p>
         </Link>
         
-        <Link href="/dashboard/compute" className={vmStyles.serviceCard}>
+        <Link href="/dashboard/compute" className={`${vmStyles.serviceCard} ${vmStyles.disabledCard}`}>
           <div className={vmStyles.serviceIcon}>⚡</div>
           <h3 className={vmStyles.serviceTitle}>Dedicated Hosts</h3>
           <p className={vmStyles.serviceDescription}>
@@ -97,9 +139,10 @@ const VirtualMachines = () => {
 
       <h3 className={styles.subsectionTitle}>Recent VMs</h3>
 
-      {/* VM List */}
       <div className={styles.resourceTable}>
-        {virtualMachines.length > 0 ? (
+        {loading ? (
+          <div className={styles.loadingState}>Loading instances...</div>
+        ) : virtualMachines.length > 0 ? (
           <table className={styles.table}>
             <thead>
               <tr>
@@ -113,10 +156,10 @@ const VirtualMachines = () => {
             </thead>
             <tbody>
               {virtualMachines.slice(0, 5).map(vm => (
-                <tr key={vm.id}>
+                <tr key={vm._id}>
                   <td>{vm.name}</td>
-                  <td>{vm.cpu} vCPUs, {vm.memory} GB RAM</td>
-                  <td>{vm.os}</td>
+                  <td>{getCpuCount(vm)} vCPUs, {getMemorySize(vm)} GB RAM</td>
+                  <td>{getOsName(vm)}</td>
                   <td>{formatDate(vm.createdAt)}</td>
                   <td>
                     <span className={`${styles.statusBadge} ${styles[`status${vm.status}`]}`}>
@@ -127,7 +170,7 @@ const VirtualMachines = () => {
                     <div className={vmStyles.actionButtons}>
                       {vm.status === 'running' && (
                         <button
-                          onClick={() => handleStopVM(vm.id)}
+                          onClick={() => handleStopVM(vm._id)}
                           className={`${vmStyles.actionButton} ${vmStyles.stopButton}`}
                           aria-label="Stop VM"
                           title="Stop"
@@ -137,7 +180,7 @@ const VirtualMachines = () => {
                       )}
                       {vm.status === 'stopped' && (
                         <button
-                          onClick={() => handleStartVM(vm.id)}
+                          onClick={() => handleStartVM(vm._id)}
                           className={`${vmStyles.actionButton} ${vmStyles.startButton}`}
                           aria-label="Start VM"
                           title="Start"
@@ -146,7 +189,7 @@ const VirtualMachines = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => handleDeleteVM(vm.id)}
+                        onClick={() => openDeleteModal(vm)}
                         className={`${vmStyles.actionButton} ${vmStyles.deleteButton}`}
                         aria-label="Delete VM"
                         title="Delete"
@@ -154,7 +197,7 @@ const VirtualMachines = () => {
                         🗑
                       </button>
                       <Link
-                        href={`/dashboard/compute/instances/${vm.id}`}
+                        href={`/dashboard/compute/instances/${vm._id}`}
                         className={`${vmStyles.actionButton} ${vmStyles.detailsButton}`}
                         aria-label="VM details"
                         title="Details"
@@ -182,6 +225,39 @@ const VirtualMachines = () => {
           <Link href="/dashboard/compute/instances" className={styles.viewAllLink}>
             View all instances
           </Link>
+        </div>
+      )}
+
+      {isDeleteModalOpen && selectedVm && (
+        <div className={instanceStyles.modalOverlay}>
+          <div className={instanceStyles.modal}>
+            <div className={instanceStyles.modalHeader}>
+              <h3 className={instanceStyles.modalTitle}>Delete Instance</h3>
+              <button className={instanceStyles.closeButton} onClick={closeDeleteModal}>✕</button>
+            </div>
+            <div className={instanceStyles.modalContent}>
+              <p>Are you sure you want to delete <strong>{selectedVm.name}</strong>? This action cannot be undone.</p>
+              <p>To confirm deletion, please type <strong>DELETE</strong> in the box below.</p>
+              <input
+                type="text"
+                className={instanceStyles.confirmInput}
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoFocus
+              />
+              <div className={instanceStyles.formActions}>
+                <button className={instanceStyles.cancelButton} onClick={closeDeleteModal}>Cancel</button>
+                <button 
+                  className={instanceStyles.deleteButtonLarge} 
+                  onClick={handleDeleteVM}
+                  disabled={deleteConfirmText !== 'DELETE'}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

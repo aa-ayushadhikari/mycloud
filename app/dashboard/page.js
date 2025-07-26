@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import { useSubscription } from '../hooks/useSubscription';
 import { useCloud } from '../context/CloudContext';
 import styles from './dashboard.module.css';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  // Destructure what we need from the API-driven context
-  const { resources, virtualMachines, loading } = useCloud();
+  const { userSubscription, loading: subscriptionLoading } = useSubscription();
+  const { virtualMachines, loading: vmsLoading } = useCloud();
   const [timeOfDay, setTimeOfDay] = useState('');
   
   // Set greeting based on time of day
@@ -24,7 +25,23 @@ const Dashboard = () => {
       setTimeOfDay('evening');
     }
   }, []);
-  
+
+  const loading = subscriptionLoading || vmsLoading;
+
+  const quotaUsage = userSubscription?.quotaUsage || {
+    compute: {
+      vCpuCores: { used: 0, total: 1 },
+      ramGB: { used: 0, total: 0.5 },
+    },
+    storage: {
+      totalGB: { used: 0, total: 50 },
+    },
+  };
+
+  const cpuUsage = quotaUsage.compute?.vCpuCores || { used: 0, total: 1 };
+  const memoryUsage = quotaUsage.compute?.ramGB || { used: 0, total: 0.5 };
+  const storageUsage = quotaUsage.storage?.totalGB || { used: 0, total: 50 };
+
   // Helper functions to safely access potentially nested data
   const getCpuCount = (vm) => vm.specs?.cpu?.cores || vm.cpu || '--';
   const getMemorySize = (vm) => vm.specs?.memory || vm.memory || '--';
@@ -47,22 +64,22 @@ const Dashboard = () => {
           </div>
           
           <div className={styles.statValue}>
-            {loading ? '...' : `${resources.cpu.used} / ${resources.cpu.total}`} vCPUs
+            {loading ? '...' : `${cpuUsage.used} / ${cpuUsage.total}`} vCPUs
           </div>
           <div className={styles.statLabel}>
-            {loading ? '--' : Math.round((resources.cpu.used / (resources.cpu.total || 1)) * 100)}% Utilized
+            {loading ? '--' : Math.round((cpuUsage.used / (cpuUsage.total || 1)) * 100)}% Utilized
           </div>
           
           <div className={styles.progressContainer}>
             <div className={styles.progressBar}>
               <div 
                 className={styles.progressFill} 
-                style={{ width: loading ? '0%' : `${(resources.cpu.used / (resources.cpu.total || 1)) * 100}%` }}
+                style={{ width: loading ? '0%' : `${(cpuUsage.used / (cpuUsage.total || 1)) * 100}%` }}
               ></div>
             </div>
             <div className={styles.progressStats}>
-              <span>Used: {loading ? '--' : resources.cpu.used} vCPUs</span>
-              <span>Available: {loading ? '--' : resources.cpu.total - resources.cpu.used} vCPUs</span>
+              <span>Used: {loading ? '--' : cpuUsage.used} vCPUs</span>
+              <span>Available: {loading ? '--' : cpuUsage.total - cpuUsage.used} vCPUs</span>
             </div>
           </div>
         </div>
@@ -75,22 +92,22 @@ const Dashboard = () => {
           </div>
           
           <div className={styles.statValue}>
-            {loading ? '...' : `${resources.memory.used} / ${resources.memory.total}`} GB
+            {loading ? '...' : `${memoryUsage.used} / ${memoryUsage.total}`} GB
           </div>
           <div className={styles.statLabel}>
-            {loading ? '--' : Math.round((resources.memory.used / (resources.memory.total || 1)) * 100)}% Utilized
+            {loading ? '--' : Math.round((memoryUsage.used / (memoryUsage.total || 1)) * 100)}% Utilized
           </div>
           
           <div className={styles.progressContainer}>
             <div className={styles.progressBar}>
               <div 
                 className={styles.progressFill} 
-                style={{ width: loading ? '0%' : `${(resources.memory.used / (resources.memory.total || 1)) * 100}%` }}
+                style={{ width: loading ? '0%' : `${(memoryUsage.used / (memoryUsage.total || 1)) * 100}%` }}
               ></div>
             </div>
             <div className={styles.progressStats}>
-              <span>Used: {loading ? '--' : resources.memory.used} GB</span>
-              <span>Available: {loading ? '--' : resources.memory.total - resources.memory.used} GB</span>
+              <span>Used: {loading ? '--' : memoryUsage.used} GB</span>
+              <span>Available: {loading ? '--' : memoryUsage.total - memoryUsage.used} GB</span>
             </div>
           </div>
         </div>
@@ -103,22 +120,22 @@ const Dashboard = () => {
           </div>
           
           <div className={styles.statValue}>
-            {loading ? '...' : `${resources.storage.used} / ${resources.storage.total}`} GB
+            {loading ? '...' : `${storageUsage.used} / ${storageUsage.total}`} GB
           </div>
           <div className={styles.statLabel}>
-            {loading ? '--' : Math.round((resources.storage.used / (resources.storage.total || 1)) * 100)}% Utilized
+            {loading ? '--' : Math.round((storageUsage.used / (storageUsage.total || 1)) * 100)}% Utilized
           </div>
           
           <div className={styles.progressContainer}>
             <div className={styles.progressBar}>
               <div 
                 className={styles.progressFill} 
-                style={{ width: loading ? '0%' : `${(resources.storage.used / (resources.storage.total || 1)) * 100}%` }}
+                style={{ width: loading ? '0%' : `${(storageUsage.used / (storageUsage.total || 1)) * 100}%` }}
               ></div>
             </div>
             <div className={styles.progressStats}>
-              <span>Used: {loading ? '--' : resources.storage.used} GB</span>
-              <span>Available: {loading ? '--' : resources.storage.total - resources.storage.used} GB</span>
+              <span>Used: {loading ? '--' : storageUsage.used} GB</span>
+              <span>Available: {loading ? '--' : storageUsage.total - storageUsage.used} GB</span>
             </div>
           </div>
         </div>

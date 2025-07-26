@@ -20,6 +20,7 @@ const VMDetailsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Fetch all VM data from the various API endpoints
   const fetchAllVmData = useCallback(async () => {
@@ -68,13 +69,29 @@ const VMDetailsPage = () => {
   const handleStartVM = () => handleVmAction(instanceService.startInstance, params.id);
   const handleStopVM = () => handleVmAction(instanceService.stopInstance, params.id);
   const handleDeleteVM = async () => {
+    // Immediately redirect and don't block the UI
+    router.push('/dashboard/compute/instances');
+    
+    // Perform the deletion in the background
     try {
       await instanceService.terminateInstance(params.id);
-      router.push('/dashboard/compute/instances');
+      // No need to do anything here since we've already redirected
     } catch (err) {
-      setError('Failed to delete the VM.');
-      setIsConfirmDeleteOpen(false);
+      // If the deletion fails, the instance will remain in the list.
+      // The user will see it's still there, and can try again.
+      // We could add a more robust notification system here in the future.
+      console.error('Failed to delete the VM in the background:', err);
     }
+  };
+
+  const handleOpenDeleteModal = () => {
+    setDeleteConfirmText('');
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setIsConfirmDeleteOpen(false);
+    setDeleteConfirmText('');
   };
 
   // Helper functions
@@ -111,7 +128,7 @@ const VMDetailsPage = () => {
           {get(vmData, 'details.basicInfo.status') === 'stopped' && (
             <button onClick={handleStartVM} className={`${instanceStyles.actionButtonLarge} ${instanceStyles.startButton}`}>Start</button>
           )}
-          <button onClick={() => setIsConfirmDeleteOpen(true)} className={`${instanceStyles.actionButtonLarge} ${instanceStyles.deleteButtonLarge}`}>Delete</button>
+          <button onClick={handleOpenDeleteModal} className={`${instanceStyles.actionButtonLarge} ${instanceStyles.deleteButtonLarge}`}>Delete</button>
         </div>
       </div>
 
@@ -163,13 +180,28 @@ const VMDetailsPage = () => {
           <div className={instanceStyles.modal}>
             <div className={instanceStyles.modalHeader}>
               <h3 className={instanceStyles.modalTitle}>Delete Instance</h3>
-              <button className={instanceStyles.closeButton} onClick={() => setIsConfirmDeleteOpen(false)}>✕</button>
+              <button className={instanceStyles.closeButton} onClick={handleCloseDeleteModal}>✕</button>
             </div>
             <div className={instanceStyles.modalContent}>
               <p>Are you sure you want to delete <strong>{get(vmData, 'details.basicInfo.name')}</strong>? This action cannot be undone.</p>
+              <p>To confirm deletion, please type <strong>DELETE</strong> in the box below.</p>
+              <input
+                type="text"
+                className={instanceStyles.confirmInput}
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoFocus
+              />
               <div className={instanceStyles.formActions}>
-                <button className={instanceStyles.cancelButton} onClick={() => setIsConfirmDeleteOpen(false)}>Cancel</button>
-                <button className={instanceStyles.deleteButtonLarge} onClick={handleDeleteVM}>Delete</button>
+                <button className={instanceStyles.cancelButton} onClick={handleCloseDeleteModal}>Cancel</button>
+                <button 
+                  className={instanceStyles.deleteButtonLarge} 
+                  onClick={handleDeleteVM}
+                  disabled={deleteConfirmText !== 'DELETE'}
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>

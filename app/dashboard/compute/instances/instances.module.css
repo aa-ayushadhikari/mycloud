@@ -244,52 +244,122 @@
 }
 
 .modal {
-  background-color: var(--background);
+  background: var(--background);
+  padding: 1.5rem 2rem;
   border-radius: 12px;
+  box-shadow: var(--box-shadow);
   width: 90%;
-  max-width: 700px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  max-height: 90vh;
-  overflow-y: auto;
+  max-width: 480px;
+  z-index: 1001;
+  border: 1px solid var(--light-gray);
 }
 
 .modalHeader {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 1.5rem 2rem;
+  align-items: center;
   border-bottom: 1px solid var(--light-gray);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .modalTitle {
-  font-size: 1.5rem;
-  font-weight: 700;
   margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
   color: var(--foreground);
 }
 
 .closeButton {
   background: none;
   border: none;
+  font-size: 1.5rem;
   cursor: pointer;
-  font-size: 1.25rem;
   color: var(--secondary);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  transition: color 0.2s;
 }
 
 .closeButton:hover {
-  background-color: var(--light-gray);
   color: var(--foreground);
 }
 
 .modalContent {
-  padding: 2rem;
+  padding: 1rem 0;
+}
+
+.modalContent p {
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  color: var(--secondary);
+}
+
+.modalContent p strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.confirmInput {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--dark-gray);
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--foreground);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+
+.confirmInput::placeholder {
+  color: var(--secondary);
+}
+
+.confirmInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.cancelButton,
+.deleteButtonLarge {
+  padding: 0.65rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.cancelButton {
+  background-color: transparent;
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+
+.cancelButton:hover {
+  background-color: var(--light-gray);
+  border-color: var(--light-gray);
+  color: var(--foreground);
+}
+
+.deleteButtonLarge {
+  background-color: var(--danger);
+  color: white;
+}
+
+.deleteButtonLarge:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+
+.deleteButtonLarge:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* New wizard-style VM creation */

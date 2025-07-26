@@ -3,17 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useCloud } from '../../../context/CloudContext';
-import { useAllInstances } from '../../../hooks/useInstances'; // Import the new hook
+import { useSubscription } from '../../../hooks/useSubscription'; // Import useSubscription
+import { useAllInstances } from '../../../hooks/useInstances';
 import { instanceService } from '../../../services/instanceService';
 import styles from '../../dashboard.module.css';
 import instanceStyles from './instances.module.css';
 import CreateVMDrawer from './components/CreateVMDrawer';
 
 const InstancesPage = () => {
-  const [filter, setFilter] = useState('all'); // Default filter
+  const [filter, setFilter] = useState('all');
   
-  // Use the useAllInstances hook to fetch real data from the API
   const { 
     instances: apiInstances, 
     loading: apiLoading, 
@@ -21,89 +20,94 @@ const InstancesPage = () => {
     refetchInstances 
   } = useAllInstances({ status: filter === 'all' ? undefined : filter });
   
-  // Keep the CloudContext for other resource data and legacy functions
-  const { resources, updateVMStatus, deleteVM } = useCloud();
+  const { userSubscription, loading: subscriptionLoading } = useSubscription();
   
   const searchParams = useSearchParams();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedVm, setSelectedVm] = useState(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   
-  // Check if drawer should be opened based on URL parameters
   useEffect(() => {
     if (searchParams.get('action') === 'create') {
       setIsDrawerOpen(true);
     }
   }, [searchParams]);
   
-  // Open drawer
-  const openDrawer = () => {
-    setIsDrawerOpen(true);
-  };
+  const openDrawer = () => setIsDrawerOpen(true);
 
-  // Close drawer and refresh instances list
   const closeDrawer = () => {
     setIsDrawerOpen(false);
-    // Refresh instances when drawer closes to get the latest data
     refetchInstances();
   };
 
-  // Start VM
-  const handleStartVM = (vmId) => {
-    // We can optimistically update the UI while the API call is in progress
-    updateVMStatus(vmId, 'starting'); 
-    instanceService.startInstance(vmId)
-      .then(() => refetchInstances()) // Refresh list on success
-      .catch(err => console.error('Error starting VM:', err));
+  const handleAction = async (action, vmId) => {
+    try {
+      await action(vmId);
+      refetchInstances();
+    } catch (err) {
+      console.error(`Action failed for VM ${vmId}:`, err);
+    }
   };
 
-  // Stop VM
-  const handleStopVM = (vmId) => {
-    updateVMStatus(vmId, 'stopping');
-    instanceService.stopInstance(vmId)
-      .then(() => refetchInstances()) // Refresh list on success
-      .catch(err => console.error('Error stopping VM:', err));
+  const handleStartVM = (vmId) => handleAction(instanceService.startInstance, vmId);
+  const handleStopVM = (vmId) => handleAction(instanceService.stopInstance, vmId);
+  
+  const openDeleteModal = (vm) => {
+    setSelectedVm(vm);
+    setIsDeleteModalOpen(true);
+    setDeleteConfirmText('');
+  };
+  
+  const closeDeleteModal = () => {
+    setSelectedVm(null);
+    setIsDeleteModalOpen(false);
+    setDeleteConfirmText('');
   };
 
-  // Delete VM
-  const handleDeleteVM = (vmId) => {
-    if (confirm('Are you sure you want to delete this instance? This action cannot be undone.')) {
-      // Optimistically remove from context
-      deleteVM(vmId); 
-      instanceService.terminateInstance(vmId)
-        .then(() => refetchInstances()) // Refresh list on success
-        .catch(err => console.error('Error terminating VM:', err));
+  const handleDeleteVM = async () => {
+    if (!selectedVm) return;
+    
+    closeDeleteModal();
+    try {
+      await instanceService.terminateInstance(selectedVm._id || selectedVm.id);
+      refetchInstances();
+    } catch (err) {
+      console.error('Error terminating VM:', err);
     }
   };
   
-  // Get formatted date
   const formatDate = (dateString) => {
     return dateString ? new Date(dateString).toLocaleString() : '---';
   };
   
-  // Specific helper function to get the OS name, handling multiple data structures.
   const getOsName = (vm) => {
-    // Handles structure from details API: { os: { name: 'Ubuntu', version: '22.04' } }
     if (vm?.os?.name) {
       return `${vm.os.name} ${vm.os.version || ''}`.trim();
     }
-    // Handles structure from list API: { basicInfo: { os: 'Windows' } }
     if (vm?.basicInfo?.os) {
       return vm.basicInfo.os;
     }
-    // Handles older or inconsistent structures
     if (typeof vm?.os === 'string') {
       return vm.os;
     }
-    // If no valid OS is found, return the placeholder
     return '---';
   };
 
-  // Specific helpers for resources to ensure they also have a proper fallback
   const getCpuCount = (vm) => vm?.specs?.cpu?.cores || vm?.cpu || '---';
   const getMemorySize = (vm) => vm?.specs?.memory || vm?.memory || '---';
 
-  // Use the API data as the primary source of truth
+  const isLoading = apiLoading || subscriptionLoading;
   const displayInstances = apiInstances;
-  const isLoading = apiLoading;
+  const quotaUsage = userSubscription?.quotaUsage || {
+    compute: {
+      vCpuCores: { used: 0, total: 1 },
+      ramGB: { used: 0, total: 0.5 },
+    },
+  };
+  
+  const cpuUsage = quotaUsage.compute?.vCpuCores || { used: 0, total: 1 };
+  const memoryUsage = quotaUsage.compute?.ramGB || { used: 0, total: 0.5 };
 
   return (
     <div>
@@ -122,7 +126,6 @@ const InstancesPage = () => {
         </button>
       </div>
 
-      {/* Filter controls */}
       <div className={instanceStyles.filterControls}>
         {['all', 'running', 'stopped', 'provisioning', 'terminated'].map(status => (
           <button
@@ -135,35 +138,33 @@ const InstancesPage = () => {
         ))}
       </div>
 
-      {/* Resource summary */}
       <div className={instanceStyles.resourceSummary}>
         <div className={instanceStyles.resourceItem}>
           <span className={instanceStyles.resourceLabel}>CPU</span>
           <div className={instanceStyles.resourceValue}>
-            {resources.cpu.used} / {resources.cpu.total} vCPUs
+            {isLoading ? '...' : `${cpuUsage.used} / ${cpuUsage.total}`} vCPUs
           </div>
           <div className={instanceStyles.progressBar}>
             <div 
               className={instanceStyles.progressFill} 
-              style={{ width: `${(resources.cpu.used / resources.cpu.total) * 100}%` }}
+              style={{ width: isLoading ? '0%' : `${(cpuUsage.used / (cpuUsage.total || 1)) * 100}%` }}
             ></div>
           </div>
         </div>
         <div className={instanceStyles.resourceItem}>
           <span className={instanceStyles.resourceLabel}>Memory</span>
           <div className={instanceStyles.resourceValue}>
-            {resources.memory.used} / {resources.memory.total} GB
+            {isLoading ? '...' : `${memoryUsage.used} / ${memoryUsage.total}`} GB
           </div>
           <div className={instanceStyles.progressBar}>
             <div 
               className={instanceStyles.progressFill} 
-              style={{ width: `${(resources.memory.used / resources.memory.total) * 100}%` }}
+              style={{ width: isLoading ? '0%' : `${(memoryUsage.used / (memoryUsage.total || 1)) * 100}%` }}
             ></div>
           </div>
         </div>
       </div>
 
-      {/* VM List */}
       <div className={styles.resourceTable}>
         {isLoading ? (
           <div className={styles.loadingState}>Loading instances...</div>
@@ -214,7 +215,7 @@ const InstancesPage = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => handleDeleteVM(vm._id || vm.id)}
+                        onClick={() => openDeleteModal(vm)}
                         className={`${instanceStyles.actionButton} ${instanceStyles.deleteButton}`}
                         aria-label="Delete VM"
                         title="Delete"
@@ -245,8 +246,40 @@ const InstancesPage = () => {
         )}
       </div>
 
-      {/* VM Creation Drawer */}
       <CreateVMDrawer isOpen={isDrawerOpen} onClose={closeDrawer} />
+
+      {isDeleteModalOpen && selectedVm && (
+        <div className={instanceStyles.modalOverlay}>
+          <div className={instanceStyles.modal}>
+            <div className={instanceStyles.modalHeader}>
+              <h3 className={instanceStyles.modalTitle}>Delete Instance</h3>
+              <button className={instanceStyles.closeButton} onClick={closeDeleteModal}>✕</button>
+            </div>
+            <div className={instanceStyles.modalContent}>
+              <p>Are you sure you want to delete <strong>{selectedVm.name}</strong>? This action cannot be undone.</p>
+              <p>To confirm deletion, please type <strong>DELETE</strong> in the box below.</p>
+              <input
+                type="text"
+                className={instanceStyles.confirmInput}
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoFocus
+              />
+              <div className={instanceStyles.formActions}>
+                <button className={instanceStyles.cancelButton} onClick={closeDeleteModal}>Cancel</button>
+                <button 
+                  className={instanceStyles.deleteButtonLarge} 
+                  onClick={handleDeleteVM}
+                  disabled={deleteConfirmText !== 'DELETE'}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
